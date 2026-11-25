@@ -1,6 +1,8 @@
 package com.qurantime.kotlin.core.nav
 
 import androidx.compose.foundation.layout.ColumnScope
+import com.qurantime.kotlin.core.net.OnlineStatus
+import com.qurantime.kotlin.core.ui.OfflineBanner
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -39,7 +41,8 @@ fun tabOf(dest: NavDestination): AppTab? = dest.hierarchy.firstNotNullOfOrNull {
 @Composable
 fun AppNavHost(
     nav: NavHostController,
-    bottomExtras: @Composable ColumnScope.() -> Unit = {},
+    online: OnlineStatus? = null,
+    bottomExtras: @Composable ColumnScope.() -> Unit = { online?.let { OfflineBanner(it) } },
     destinations: NavGraphBuilder.() -> Unit = { placeholderTabs() },
 ) {
     val entry by nav.currentBackStackEntryAsState()

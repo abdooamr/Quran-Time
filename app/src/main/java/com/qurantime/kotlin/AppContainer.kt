@@ -15,6 +15,12 @@ import com.qurantime.kotlin.core.settings.SettingsStore
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
 import com.qurantime.kotlin.feature.explore.ExploreRepository
 import com.qurantime.kotlin.feature.live.LiveRepository
+import com.qurantime.kotlin.feature.mushaf.MushafController
+import com.qurantime.kotlin.feature.mushaf.image.MaskCodec
+import com.qurantime.kotlin.feature.mushaf.image.OkHttpPageFetcher
+import com.qurantime.kotlin.feature.mushaf.image.PageImageStore
+import com.qurantime.kotlin.feature.mushaf.image.RawDeflateMaskCodec
+import com.qurantime.kotlin.feature.mushaf.ui.PageBitmapCache
 import com.qurantime.kotlin.feature.reciters.RecitersRepository
 import com.qurantime.kotlin.feature.timing.TimingRepository
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +58,20 @@ open class AppContainer(context: Context) {
     val timing by lazy { TimingRepository(api, fetcher) }
     val live by lazy { LiveRepository(api, fetcher) }
     val explore by lazy { ExploreRepository(api, fetcher) }
+
+    open val maskCodec: MaskCodec = RawDeflateMaskCodec
+    open val pages: PageImageStore by lazy { PageImageStore(appContext.filesDir, OkHttpPageFetcher(http), maskCodec) }
+    val pageBitmaps by lazy { PageBitmapCache() }
+
+    /** Built after settings are loaded (it starts at the saved last page). */
+    val mushaf by lazy {
+        MushafController(
+            initialPage = settings.state.value.lastPage,
+            saveLastPage = settings::setLastPage,
+            prefetch = { page, width -> pages.prefetchAround(page, width) },
+            scope = appScope,
+        )
+    }
 
     open val online: OnlineStatus by lazy {
         ConnectivityOnlineStatus(appContext.getSystemService(ConnectivityManager::class.java))

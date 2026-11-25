@@ -83,7 +83,8 @@ object RawDeflateMaskCodec : MaskCodec {
         writeFile(out, m, bytes.toByteArray())
     }
 
-    override fun decode(input: InputStream): Bitmap {
+    /** The mask bytes, without making a bitmap. */
+    fun decodeMask(input: InputStream): PageMask {
         val (w, h, payload) = readFile(input)
         val alpha = ByteArray(w * h)
         val inflater = Inflater()
@@ -101,6 +102,8 @@ object RawDeflateMaskCodec : MaskCodec {
         } finally {
             inflater.end()
         }
-        return alphaBitmap(w, h, alpha)
+        return PageMask(w, h, alpha)
     }
+
+    override fun decode(input: InputStream): Bitmap = decodeMask(input).let { alphaBitmap(it.width, it.height, it.alpha) }
 }

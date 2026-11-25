@@ -3,6 +3,7 @@ package com.qurantime.kotlin.core.nav
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
@@ -43,6 +44,9 @@ fun Shell(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
+        // Each screen handles the status bar itself (a top app bar, or the
+        // Mushaf header); the shell only reserves room for the bottom bar.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             Column {
                 bottomExtras()

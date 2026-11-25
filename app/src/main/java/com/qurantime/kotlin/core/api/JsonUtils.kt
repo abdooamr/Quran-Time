@@ -2,6 +2,7 @@ package com.qurantime.kotlin.core.api
 
 import java.util.Calendar
 import java.util.TimeZone
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -60,4 +61,12 @@ fun parseDate(v: JsonElement?): Long? {
     return ms
 }
 
-operator fun JsonElement.get(key: String): JsonElement? = (this as? JsonObject)?.get(key)
+/** The objects in the array at [key] of this object; empty when missing or not an array. */
+fun JsonElement.objectsAt(key: String): List<JsonObject> =
+    ((this as? JsonObject)?.get(key) as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
+
+/** The objects of this array; empty when it isn't one. */
+fun JsonElement.objects(): List<JsonObject> = (this as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
+
+/** The string content of a primitive, or null for null/missing/non-primitives. */
+fun JsonElement?.stringOrNull(): String? = primitiveOrNull()?.content

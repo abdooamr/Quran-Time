@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.QuranTime" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F4EEDD</item>
+        <item name="postSplashScreenTheme">@style/Theme.QuranTime.App</item>
+    </style>
+    <style name="Theme.QuranTime.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F4EEDD</item>
+    </style>
+</resources>

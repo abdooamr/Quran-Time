@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.compose.rememberNavController
+import com.qurantime.kotlin.core.l10n.LocalizedContent
+import com.qurantime.kotlin.core.nav.AppNavHost
+import com.qurantime.kotlin.core.theme.AppThemeMode
+import com.qurantime.kotlin.core.theme.QuranTimeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,7 +17,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            Surface(Modifier.fillMaxSize()) {}
+            LocalizedContent("ar") {
+                QuranTimeTheme(AppThemeMode.SYSTEM) {
+                    AppNavHost(rememberNavController())
+                }
+            }
         }
     }
 }

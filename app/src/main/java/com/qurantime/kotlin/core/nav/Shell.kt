@@ -1,0 +1,64 @@
+package com.qurantime.kotlin.core.nav
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material.icons.outlined.Radio
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.qurantime.kotlin.R
+
+enum class AppTab(val route: Any, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
+    MUSHAF(MushafRoute, R.string.tab_mushaf, Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
+    LISTEN(ListenRoute, R.string.tab_listen, Icons.Outlined.Headphones, Icons.Filled.Headphones),
+    LIVE(LiveRoute, R.string.tab_live, Icons.Outlined.Radio, Icons.Filled.Radio),
+    EXPLORE(ExploreRoute, R.string.tab_explore, Icons.Outlined.Explore, Icons.Filled.Explore),
+    MORE(MoreRoute, R.string.tab_more, Icons.Filled.MoreHoriz, Icons.Filled.MoreHoriz),
+}
+
+/**
+ * The scaffold around every tab: content plus a bottom bar holding
+ * [bottomExtras] (offline banner, mini player) above the navigation bar.
+ */
+@Composable
+fun Shell(
+    current: AppTab?,
+    onSelect: (AppTab) -> Unit,
+    bottomExtras: @Composable ColumnScope.() -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    Scaffold(
+        bottomBar = {
+            Column {
+                bottomExtras()
+                NavigationBar {
+                    for (tab in AppTab.entries) {
+                        val selected = tab == current
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = { onSelect(tab) },
+                            icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
+                            label = { Text(stringResource(tab.label)) },
+                        )
+                    }
+                }
+            }
+        },
+        content = content,
+    )
+}

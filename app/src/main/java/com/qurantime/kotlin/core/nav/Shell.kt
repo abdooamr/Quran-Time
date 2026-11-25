@@ -41,6 +41,7 @@ fun Shell(
     current: AppTab?,
     onSelect: (AppTab) -> Unit,
     bottomExtras: @Composable ColumnScope.() -> Unit = {},
+    showBottomBar: Boolean = true,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
@@ -48,7 +49,7 @@ fun Shell(
         // Mushaf header); the shell only reserves room for the bottom bar.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            Column {
+            if (showBottomBar) Column {
                 bottomExtras()
                 NavigationBar {
                     for (tab in AppTab.entries) {

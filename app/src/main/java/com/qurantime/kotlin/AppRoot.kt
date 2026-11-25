@@ -32,6 +32,10 @@ import com.qurantime.kotlin.core.nav.TabPlaceholder
 import com.qurantime.kotlin.core.nav.TitledPlaceholder
 import com.qurantime.kotlin.core.nav.tab
 import com.qurantime.kotlin.core.settings.SettingsDrivenApp
+import com.qurantime.kotlin.core.nav.PlayerRoute
+import com.qurantime.kotlin.core.ui.OfflineBanner
+import com.qurantime.kotlin.feature.audio.ui.FullPlayer
+import com.qurantime.kotlin.feature.audio.ui.MiniPlayer
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarkButton
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarksScreen
 import com.qurantime.kotlin.feature.more.MoreScreen
@@ -48,7 +52,16 @@ fun QuranTimeRoot(container: AppContainer) {
         // Test tags double as resource ids, so benchmarks can find the pager.
         Box(Modifier.semantics { testTagsAsResourceId = true }) {
           SettingsDrivenApp(container.settings) {
-            AppNavHost(rememberNavController(), online = container.online) {
+            val nav = rememberNavController()
+            AppNavHost(
+                nav,
+                online = container.online,
+                bottomExtras = {
+                    OfflineBanner(container.online)
+                    MiniPlayer(onOpen = { nav.navigate(PlayerRoute) { launchSingleTop = true } })
+                },
+            ) {
+                composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }) }
                 tab<MushafTab, MushafRoute>(MushafRoute, {
                     MushafScreen(actions = { page, _ -> BookmarkButton(page) })
                 })

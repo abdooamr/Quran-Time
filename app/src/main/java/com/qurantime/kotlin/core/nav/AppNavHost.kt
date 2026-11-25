@@ -64,7 +64,9 @@ fun AppNavHost(
     val entry by nav.currentBackStackEntryAsState()
     val current = entry?.destination?.let(::tabOf)
     CompositionLocalProvider(LocalNavController provides nav) {
-        Shell(current = current, onSelect = nav::openTab, bottomExtras = bottomExtras) { padding ->
+        // The full player and the video player cover the whole screen.
+        val fullScreen = entry?.destination?.let { it.hasRoute<PlayerRoute>() || it.hasRoute<VideoRoute>() } == true
+        Shell(current = current, onSelect = nav::openTab, bottomExtras = bottomExtras, showBottomBar = !fullScreen) { padding ->
             NavHost(nav, startDestination = MushafTab, modifier = Modifier.padding(padding), builder = destinations)
         }
     }

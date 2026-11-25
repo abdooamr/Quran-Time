@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 val keyProps = Properties().apply {
@@ -71,6 +73,9 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
+    // Room's exported schemas, for migration tests (debug builds only: Robolectric reads the merged debug assets).
+    sourceSets.getByName("debug").assets.directories.add("$projectDir/schemas")
+
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "DebugProbesKt.bin", "kotlin-tooling-metadata.json")
     }
@@ -78,6 +83,10 @@ android {
 
 kotlin {
     jvmToolchain(17)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
@@ -98,6 +107,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -105,6 +118,8 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.turbine)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
 }

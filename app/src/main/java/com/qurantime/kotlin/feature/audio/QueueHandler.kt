@@ -104,7 +104,7 @@ class QueueHandler(
         _current.value = list.getOrNull(index)?.let { NowPlaying(it, index, uris[index], null) }
         _state.value = _state.value.copy(errorMessage = null, isLive = list.getOrNull(index) is RadioStream, queueIndex = index)
         return try {
-            backend.setSources(uris, index, startPositionMs)
+            backend.setSources(list.mapIndexed { i, item -> QueueSource(uris[i], item) }, index, startPositionMs)
             true
         } catch (e: kotlin.coroutines.cancellation.CancellationException) {
             throw e

@@ -112,6 +112,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidsvg)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -121,6 +123,8 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.turbine)
+    testImplementation(libs.media3.test.utils)
+    testImplementation(libs.media3.test.utils.robolectric)
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)

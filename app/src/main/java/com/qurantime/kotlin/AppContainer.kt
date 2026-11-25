@@ -12,6 +12,9 @@ import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.net.ConnectivityOnlineStatus
 import com.qurantime.kotlin.core.net.OnlineStatus
 import com.qurantime.kotlin.core.settings.SettingsStore
+import com.qurantime.kotlin.feature.audio.Media3Backend
+import com.qurantime.kotlin.feature.audio.QueueHandler
+import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
 import com.qurantime.kotlin.feature.explore.ExploreRepository
@@ -74,6 +77,17 @@ open class AppContainer(context: Context) {
             scope = appScope,
         )
     }
+
+    /** Main-thread scope: the player and everything driving it live on the main thread. */
+    val mainScope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
+
+    /** The app's one ExoPlayer, created on first use (not at start-up). */
+    val player by lazy { buildPlayer(appContext) }
+
+    open val queue: QueueHandler by lazy { QueueHandler(Media3Backend(player, mainScope), localPathFor = { null }, mainScope) }
+
+    /** Stop from the notification or the app: stops playback (later tasks also cancel sleep and repeat). */
+    open fun stopPlayback() = queue.stop()
 
     /** Loads the saved bookmarks in the background as soon as anything asks for them. */
     val bookmarks by lazy {

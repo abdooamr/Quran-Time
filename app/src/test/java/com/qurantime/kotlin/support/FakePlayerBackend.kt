@@ -3,6 +3,7 @@ package com.qurantime.kotlin.support
 import com.qurantime.kotlin.feature.audio.BackendState
 import com.qurantime.kotlin.feature.audio.PlayerBackend
 import com.qurantime.kotlin.feature.audio.Processing
+import com.qurantime.kotlin.feature.audio.QueueSource
 import com.qurantime.kotlin.feature.audio.RepeatMode
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,10 +55,10 @@ class FakePlayerBackend : PlayerBackend {
         _errors.tryEmit(e)
     }
 
-    override suspend fun setSources(urls: List<String>, startIndex: Int, startPositionMs: Long) {
+    override suspend fun setSources(sources: List<QueueSource>, startIndex: Int, startPositionMs: Long) {
         calls += "setSources"
         if (failSetSources) throw IllegalStateException("Source error")
-        uris = urls
+        uris = sources.map { it.uri }
         position = startPositionMs
         _index.value = startIndex
     }

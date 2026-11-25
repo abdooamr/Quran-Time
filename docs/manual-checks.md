@@ -6,3 +6,10 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 
 - [ ] Task 2: `./gradlew :benchmark:connectedBenchmarkAndroidTest -P android.testInstrumentationRunnerArguments.class=com.qurantime.kotlin.benchmark.StartupBenchmark` with the A50 unlocked. Expected: a JSON result under `benchmark/build/outputs/connected_android_test_additional_output/`. If it fails on input injection, benchmarks are run by hand from this list.
 - [x] Task 10 (done 2026-11-26: 7.3 ms median): page-image decode time on the A50: `ANDROID_SERIAL=R58M389X2XD ./gradlew :app:connectedDebugAndroidTest -P android.testInstrumentationRunnerArguments.class=com.qurantime.kotlin.MaskCodecDeviceTest`, then `adb logcat -d | grep codec=`. Expected: `codec=qtr` lines with `decodeMedianMs` ≤ 8 (it measured 5.2–8.0 ms on the emulator in a debug build).
+
+## Playback (Task 20)
+
+- [ ] Lock-screen controls: play a surah, lock the phone. Expected: play/pause, previous and next work from the lock screen; the title is the surah and the reciter.
+- [ ] Bluetooth: play through a headset or car. Expected: its play/pause and skip buttons work; unplugging or disconnecting pauses.
+- [ ] Notification Stop: Expected: playback stops and the notification goes away; the sleep timer and any repeat are cancelled.
+- [ ] Kill and restore: play, swipe the app away while paused, reopen. Expected: the same surah and position are loaded, paused.

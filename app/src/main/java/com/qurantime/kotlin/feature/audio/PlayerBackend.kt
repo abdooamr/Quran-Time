@@ -9,6 +9,9 @@ enum class Processing { IDLE, LOADING, BUFFERING, READY, COMPLETED }
 
 data class BackendState(val playing: Boolean, val processing: Processing)
 
+/** One queue entry: what to play ([uri]: a downloaded file or the network) and what it is. */
+data class QueueSource(val uri: String, val item: PlayableItem)
+
 /**
  * The media engine under [QueueHandler] (ExoPlayer in the app, a fake in
  * tests). Calls other than [setSources] return at once; their effects arrive
@@ -16,7 +19,7 @@ data class BackendState(val playing: Boolean, val processing: Processing)
  */
 interface PlayerBackend {
     /** Loads the queue; throws when the first item can't be loaded. */
-    suspend fun setSources(urls: List<String>, startIndex: Int, startPositionMs: Long)
+    suspend fun setSources(sources: List<QueueSource>, startIndex: Int, startPositionMs: Long)
     fun play()
     fun pause()
     fun stop()

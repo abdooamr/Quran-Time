@@ -57,12 +57,11 @@ import kotlin.math.abs
 /**
  * The Mushaf tab: a header (juz, surah, page actions) over the swipeable
  * pages. [actions] fills the header's end slot for the page on screen.
- * [onOpenJump] is called when the surah cartouche is tapped.
+ * Tapping the surah cartouche opens the jump sheet.
  */
 @Composable
 fun MushafScreen(
     actions: @Composable RowScope.(page: Int, suwar: List<Surah>) -> Unit = { _, _ -> },
-    onOpenJump: ((suwar: List<Surah>) -> Unit)? = null,
     pageOverlay: @Composable (page: Int) -> Unit = { MushafPageView(it) },
     belowPages: @Composable () -> Unit = {},
 ) {
@@ -84,6 +83,16 @@ fun MushafScreen(
     // After an offline first launch, try again as soon as the connection returns.
     LaunchedEffect(online) { if (online && suwar is Async.Failed) attempt++ }
 
+    var jumpSuwar by remember { mutableStateOf<List<Surah>?>(null) }
+    jumpSuwar?.let { list ->
+        JumpSheet(
+            suwar = list,
+            currentPage = container.mushaf.currentPage.value,
+            onJump = { container.mushaf.goTo(it) },
+            onDismiss = { jumpSuwar = null },
+        )
+    }
+
     val palette = LocalMushafPalette.current
     Column(Modifier.fillMaxSize().background(palette.background).statusBarsPadding()) {
         val list = (suwar as? Async.Data)?.value.orEmpty()
@@ -91,7 +100,7 @@ fun MushafScreen(
             suwar = list,
             onRetry = if (suwar is Async.Failed) ({ attempt++ }) else null,
             actions = actions,
-            onOpenJump = onOpenJump,
+            onOpenJump = { jumpSuwar = it },
         )
         Box(Modifier.weight(1f).fillMaxWidth()) {
             MushafPager(pageOverlay)

@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Size
 import com.caverock.androidsvg.RenderOptions
 import com.caverock.androidsvg.SVG
 import java.io.InputStream
+import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
 /**
@@ -27,20 +28,42 @@ fun renderWidthBucket(px: Int): Int = ((px + 119) / 120) * 120
 
 class CorruptMaskException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-/** Draws a Mushaf SVG page into a [PageMask]. Slow (tens of ms): never call it on the main thread. */
+/**
+ * Draws a Mushaf SVG page straight into an 8-bit alpha bitmap (the ink's
+ * coverage), with no full-colour copy. Slow (tens of ms): never call it on
+ * the main thread.
+ */
 object SvgRasterizer {
-    fun render(svg: InputStream, viewBox: Size, widthPx: Int): PageMask {
+    /** The page as an `ALPHA_8` bitmap [widthPx] wide (used as-is for sharp zoom). */
+    fun renderBitmap(svg: InputStream, viewBox: Size, widthPx: Int): Bitmap {
         val doc = SVG.getFromInputStream(svg)
         val heightPx = (widthPx * viewBox.height / viewBox.width).roundToInt()
-        val bmp = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+        val bmp = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ALPHA_8)
+        doc.renderToCanvas(Canvas(bmp), RenderOptions().viewPort(0f, 0f, widthPx.toFloat(), heightPx.toFloat()))
+        return bmp
+    }
+
+    /** The page as a quantised [PageMask], ready to store. */
+    fun render(svg: InputStream, viewBox: Size, widthPx: Int): PageMask {
+        val bmp = renderBitmap(svg, viewBox, widthPx)
         try {
-            doc.renderToCanvas(Canvas(bmp), RenderOptions().viewPort(0f, 0f, widthPx.toFloat(), heightPx.toFloat()))
-            val pixels = IntArray(widthPx * heightPx)
-            bmp.getPixels(pixels, 0, widthPx, 0, 0, widthPx, heightPx)
-            val alpha = ByteArray(pixels.size) { i -> quantise(pixels[i] ushr 24).toByte() }
-            return PageMask(widthPx, heightPx, alpha)
+            val w = bmp.width
+            val h = bmp.height
+            val row = bmp.rowBytes
+            val buf = ByteBuffer.allocate(row * h)
+            bmp.copyPixelsToBuffer(buf)
+            val raw = buf.array()
+            val alpha = ByteArray(w * h)
+            for (y in 0 until h) {
+                val src = y * row
+                val dst = y * w
+                for (x in 0 until w) alpha[dst + x] = QUANTISED[raw[src + x].toInt() and 0xFF]
+            }
+            return PageMask(w, h, alpha)
         } finally {
             bmp.recycle()
         }
     }
+
+    private val QUANTISED = ByteArray(256) { quantise(it).toByte() }
 }

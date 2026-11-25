@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -51,8 +53,10 @@ import com.qurantime.kotlin.R
 import com.qurantime.kotlin.core.l10n.localDigits
 import com.qurantime.kotlin.core.theme.LocalMushafPalette
 import com.qurantime.kotlin.feature.mushaf.image.PageUnavailableException
+import com.qurantime.kotlin.feature.mushaf.image.SvgRasterizer
 import com.qurantime.kotlin.feature.mushaf.image.renderWidthBucket
 import com.qurantime.kotlin.feature.mushaf.viewBoxForPage
+import java.util.zip.GZIPInputStream
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -150,22 +154,46 @@ private fun BoxScope.PageArt(
         is PageLoad.Ready -> {
             val ink = LocalMushafPalette.current.ink
             val tint = remember(ink) { ColorFilter.tint(ink, BlendMode.SrcIn) }
-            Canvas(
+            val scope = rememberCoroutineScope()
+            val zoom = remember(page, widthPx) {
+                ZoomState(scope) {
+                    val svg = container.pages.svgFor(page) ?: return@ZoomState null
+                    withContext(Dispatchers.Default) {
+                        GZIPInputStream(svg.inputStream().buffered()).use {
+                            SvgRasterizer.renderBitmap(it, viewBoxForPage(page), (widthPx * 2.5f).roundToInt()).asImageBitmap()
+                        }
+                    }
+                }
+            }
+            Box(
                 Modifier
                     .fillMaxSize()
-                    .testTag("mushaf-page-art-$page")
-                    .semantics { pageInk = ink }
-                    .then(
-                        if (onTapViewBox != null) {
-                            Modifier.pointerInput(scale) { detectTapGestures { onTapViewBox(it / scale) } }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .zoomGestures(zoom)
+                    .graphicsLayer {
+                        scaleX = zoom.scale
+                        scaleY = zoom.scale
+                        translationX = zoom.offset.x
+                        translationY = zoom.offset.y
+                    },
             ) {
-                drawImage(l.image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()), colorFilter = tint)
+                val image = zoom.hiRes ?: l.image
+                Canvas(
+                    Modifier
+                        .fillMaxSize()
+                        .testTag("mushaf-page-art-$page")
+                        .semantics { pageInk = ink }
+                        .then(
+                            if (onTapViewBox != null) {
+                                Modifier.pointerInput(scale) { detectTapGestures { onTapViewBox(it / scale) } }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                ) {
+                    drawImage(image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()), colorFilter = tint)
+                }
+                overlays(scale)
             }
-            overlays(scale)
         }
     }
 }

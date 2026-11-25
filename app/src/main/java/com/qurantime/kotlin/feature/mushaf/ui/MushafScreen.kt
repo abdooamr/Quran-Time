@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -93,6 +94,10 @@ fun MushafScreen(
         )
     }
 
+    // Start-up is "fully drawn" once the opening page is on screen.
+    val drawn by container.mushaf.firstPageDrawn.collectAsStateWithLifecycle()
+    ReportDrawnWhen { drawn }
+
     val palette = LocalMushafPalette.current
     Column(Modifier.fillMaxSize().background(palette.background).statusBarsPadding()) {
         val list = (suwar as? Async.Data)?.value.orEmpty()
@@ -148,7 +153,7 @@ private fun Header(
                         name = s.name,
                         onTap = onOpenJump?.let { open -> { open(suwar) } },
                         onTapLabel = stringResource(R.string.jump_to),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag("surah-cartouche"),
                     )
                 }
             }

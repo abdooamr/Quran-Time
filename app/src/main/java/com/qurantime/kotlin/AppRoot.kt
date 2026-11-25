@@ -1,9 +1,14 @@
 package com.qurantime.kotlin
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.qurantime.kotlin.core.nav.AboutRoute
@@ -36,10 +41,13 @@ import com.qurantime.kotlin.feature.mushaf.ui.MushafScreen
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("no AppContainer provided") }
 
 /** The whole app: settings-driven language and theme, the tab shell and every screen. */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun QuranTimeRoot(container: AppContainer) {
     CompositionLocalProvider(LocalAppContainer provides container) {
-        SettingsDrivenApp(container.settings) {
+        // Test tags double as resource ids, so benchmarks can find the pager.
+        Box(Modifier.semantics { testTagsAsResourceId = true }) {
+          SettingsDrivenApp(container.settings) {
             AppNavHost(rememberNavController(), online = container.online) {
                 tab<MushafTab, MushafRoute>(MushafRoute, {
                     MushafScreen(actions = { page, _ -> BookmarkButton(page) })
@@ -55,6 +63,7 @@ fun QuranTimeRoot(container: AppContainer) {
                     composable<AboutRoute> { TitledPlaceholder(stringResource(R.string.about)) }
                 }
             }
+          }
         }
     }
 }

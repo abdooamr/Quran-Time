@@ -18,6 +18,20 @@ class MainActivity : ComponentActivity() {
     private val container get() = (application as QuranTimeApp).container
     private var settingsLoaded by mutableStateOf(false)
 
+    private fun warmOpeningPage() {
+        val page = container.settings.state.value.lastPage
+        val width = resources.displayMetrics.widthPixels
+        container.appScope.launch(Dispatchers.IO) {
+            // Only a page already on disk: converting it here would guess the width wrong.
+            if (!container.pages.isCached(page)) return@launch
+            runCatching {
+                val r = container.pages.mask(page, width)
+                val bmp = r.file.inputStream().buffered().use { container.maskCodec.decode(it) }.also { it.prepareToDraw() }
+                container.pageBitmaps.put(page, r.bucket, bmp)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The splash stays only until settings (language, theme, last page) are read.
         installSplashScreen().setKeepOnScreenCondition { !settingsLoaded }
@@ -25,6 +39,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             container.settings.load()
+            // Decode the opening page while the first frame is being built.
+            warmOpeningPage()
             settingsLoaded = true
             // After the first frame: warm the surah list (the header needs it) off the main thread.
             Choreographer.getInstance().postFrameCallback {

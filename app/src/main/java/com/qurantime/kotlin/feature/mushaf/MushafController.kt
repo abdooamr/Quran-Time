@@ -45,6 +45,15 @@ class MushafController(
 
     private var saveJob: Job? = null
 
+    private val _firstPageDrawn = MutableStateFlow(false)
+
+    /** True once the page the app opened on has been drawn (reported as "fully drawn"). */
+    val firstPageDrawn: StateFlow<Boolean> = _firstPageDrawn.asStateFlow()
+
+    fun onPageDrawn(page: Int) {
+        if (page == _currentPage.value) _firstPageDrawn.value = true
+    }
+
     fun pauseFollow() {
         _followPaused.value = true
     }

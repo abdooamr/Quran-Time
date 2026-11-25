@@ -72,6 +72,15 @@ class PageBitmapCacheTest {
     }
 
     @Test
+    fun `any width of a page can stand in while the exact one loads`() {
+        val cache = PageBitmapCache()
+        assertNull(cache.anyFor(3))
+        cache.put(3, 1200, bmp())
+        assertNotNull(cache.anyFor(3))
+        assertNull(cache.get(3, 1080))
+    }
+
+    @Test
     fun `trim memory clears`() {
         val cache = PageBitmapCache()
         cache.put(3, 1080, bmp())

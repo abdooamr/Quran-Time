@@ -62,12 +62,17 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** The ink colour a page is drawn in (for tests and accessibility tools). */
 val PageInk = SemanticsPropertyKey<Color>("PageInk")
 private var SemanticsPropertyReceiver.pageInk by PageInk
+
+/** A page decoded at start-up (any width) shows at once; the exact width replaces it when ready. */
+private fun initialLoad(container: com.qurantime.kotlin.AppContainer, page: Int): PageLoad =
+    container.pageBitmaps.anyFor(page)?.let { PageLoad.Ready(it.second.asImageBitmap()) } ?: PageLoad.Loading
 
 private sealed interface PageLoad {
     data object Loading : PageLoad
@@ -125,15 +130,22 @@ private fun BoxScope.PageArt(
 ) {
     val container = LocalAppContainer.current
     var attempt by remember { mutableIntStateOf(0) }
-    val load by produceState<PageLoad>(PageLoad.Loading, page, widthPx, attempt) {
+    val load by produceState(initialLoad(container, page), page, widthPx, attempt) {
         val bucket = renderWidthBucket(widthPx)
         container.pageBitmaps.get(page, bucket)?.let {
             value = PageLoad.Ready(it.asImageBitmap())
             return@produceState
         }
+        // Neighbouring pages wait until the opening page is on screen, so it gets the CPU first.
+        if (page != container.mushaf.currentPage.value) container.mushaf.firstPageDrawn.first { it }
         value = try {
             val r = container.pages.mask(page, widthPx)
-            val bmp = withContext(Dispatchers.Default) { r.file.inputStream().buffered().use { container.maskCodec.decode(it) } }
+            val bmp = withContext(Dispatchers.Default) {
+                r.file.inputStream().buffered().use { container.maskCodec.decode(it) }.also {
+                    // Upload to the GPU now, on the render thread, not in the first frame that shows it.
+                    it.prepareToDraw()
+                }
+            }
             container.pageBitmaps.put(page, r.bucket, bmp)
             if (!r.exact && container.online.online.value) {
                 // Made for another screen size: show it scaled now, re-make it for this one.
@@ -177,6 +189,7 @@ private fun BoxScope.PageArt(
                     },
             ) {
                 val image = zoom.hiRes ?: l.image
+                LaunchedEffect(Unit) { container.mushaf.onPageDrawn(page) }
                 Canvas(
                     Modifier
                         .fillMaxSize()

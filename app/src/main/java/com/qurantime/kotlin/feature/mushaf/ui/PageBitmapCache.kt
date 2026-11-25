@@ -13,6 +13,9 @@ class PageBitmapCache(private val maxEntries: Int = 5) {
 
     @Synchronized fun get(page: Int, bucket: Int): Bitmap? = map[page to bucket]
 
+    /** Any decoded width of [page] (for example the one decoded at start-up), to show while the exact one loads. */
+    @Synchronized fun anyFor(page: Int): Pair<Int, Bitmap>? = map.entries.firstOrNull { it.key.first == page }?.let { it.key.second to it.value }
+
     @Synchronized fun put(page: Int, bucket: Int, bitmap: Bitmap) {
         map[page to bucket] = bitmap
     }

@@ -175,6 +175,20 @@ class QueueHandlerTest {
     }
 
     @Test
+    fun `a new queue starting at the same index still reports its first natural end`() = runTest {
+        val h = handler()
+        val done = mutableListOf<Int>()
+        backgroundScope.launchCollect(h, done)
+        h.playItems(listOf(track(2)))
+        runCurrent()
+        h.playItems(listOf(track(2), track(3))) // index 0 again: no index change from the player
+        runCurrent()
+        backend.emitIndex(1)
+        runCurrent()
+        assertEquals(listOf(0), done)
+    }
+
+    @Test
     fun `natural completion is reported, skips are not`() = runTest {
         val h = handler()
         val done = mutableListOf<Int>()

@@ -105,6 +105,8 @@ class QueueHandler(
         _state.value = _state.value.copy(errorMessage = null, isLive = list.getOrNull(index) is RadioStream, queueIndex = index)
         return try {
             backend.setSources(list.mapIndexed { i, item -> QueueSource(uris[i], item) }, index, startPositionMs)
+            // The player may not report an index change (same index as the old queue): start the history here.
+            lastIndex = index
             true
         } catch (e: kotlin.coroutines.cancellation.CancellationException) {
             throw e

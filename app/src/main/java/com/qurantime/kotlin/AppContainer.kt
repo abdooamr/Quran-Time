@@ -1,5 +1,6 @@
 package com.qurantime.kotlin
 
+import android.content.ComponentName
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -12,7 +13,12 @@ import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.net.ConnectivityOnlineStatus
 import com.qurantime.kotlin.core.net.OnlineStatus
 import com.qurantime.kotlin.core.settings.SettingsStore
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import com.qurantime.kotlin.feature.audio.Media3Backend
+import com.qurantime.kotlin.feature.audio.PlaybackService
+import com.qurantime.kotlin.feature.audio.PlayerController
 import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
@@ -86,8 +92,32 @@ open class AppContainer(context: Context) {
 
     open val queue: QueueHandler by lazy { QueueHandler(Media3Backend(player, mainScope), localPathFor = { null }, mainScope) }
 
-    /** Stop from the notification or the app: stops playback (later tasks also cancel sleep and repeat). */
-    open fun stopPlayback() = queue.stop()
+    /** Set by the activity: asks for the notification permission (Android 13+), once. */
+    var notificationPermission: (suspend () -> Unit)? = null
+
+    val playerController by lazy {
+        PlayerController(
+            queue = queue,
+            settings = settings,
+            requestNotificationPermission = { notificationPermission?.invoke() },
+            scope = mainScope,
+            ensureService = ::connectSession,
+        )
+    }
+
+    private var session: ListenableFuture<MediaController>? = null
+
+    /**
+     * Binds the media session service (lock screen, notification, Bluetooth).
+     * Done on the first play or restore, never at start-up.
+     */
+    open fun connectSession() {
+        if (session != null) return
+        session = MediaController.Builder(appContext, SessionToken(appContext, ComponentName(appContext, PlaybackService::class.java))).buildAsync()
+    }
+
+    /** Stop from the notification or the app: stops playback, the sleep timer and any repeat. */
+    open fun stopPlayback() = playerController.stop()
 
     /** Loads the saved bookmarks in the background as soon as anything asks for them. */
     val bookmarks by lazy {

@@ -12,6 +12,7 @@ import com.qurantime.kotlin.QuranTimeRoot
 import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.settings.SettingsStore
 import com.qurantime.kotlin.core.theme.AppThemeMode
+import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.mushaf.image.MaskCodec
 import com.qurantime.kotlin.feature.mushaf.image.PageImageStore
 import com.qurantime.kotlin.feature.mushaf.image.PageMask
@@ -65,6 +66,10 @@ class TestContainer(
     val pageFetcher = FakePageFetcher()
     override val maskCodec: MaskCodec = LegacyFriendlyCodec
     override val pages = PageImageStore(root, pageFetcher, maskCodec, rasterize = solidRasterize)
+    val backend = FakePlayerBackend()
+    override val queue by lazy { QueueHandler(backend, { null }, mainScope) }
+
+    override fun connectSession() {}
 }
 
 /**

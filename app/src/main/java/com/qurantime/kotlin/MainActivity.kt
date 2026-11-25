@@ -1,6 +1,10 @@
 package com.qurantime.kotlin
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import android.view.Choreographer
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +36,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        container.notificationPermission = {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
         // The splash stays only until settings (language, theme, last page) are read.
         installSplashScreen().setKeepOnScreenCondition { !settingsLoaded }
         enableEdgeToEdge()
@@ -46,6 +59,8 @@ class MainActivity : ComponentActivity() {
             Choreographer.getInstance().postFrameCallback {
                 val lang = ApiLanguage.fromTag(container.settings.state.value.locale)
                 container.appScope.launch(Dispatchers.IO) { runCatching { container.catalog.suwar(lang) } }
+                // Bring back the last recitation, paused, where it was.
+                container.mainScope.launch { container.playerController.restore() }
             }
         }
         setContent {

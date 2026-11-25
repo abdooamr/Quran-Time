@@ -114,6 +114,7 @@ dependencies {
     implementation(libs.androidsvg)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -124,6 +125,7 @@ dependencies {
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.turbine)
     testImplementation(libs.media3.test.utils)
+    testImplementation(libs.androidx.work.testing)
     testImplementation(libs.media3.test.utils.robolectric)
 
     androidTestImplementation(libs.androidx.test.ext.junit)

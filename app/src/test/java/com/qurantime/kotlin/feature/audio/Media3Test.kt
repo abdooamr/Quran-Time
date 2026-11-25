@@ -63,7 +63,8 @@ class Media3BackendTest {
 
     @Test
     fun `index and completion flows follow the player`() {
-        val p = buildPlayer(context)
+        // Media3's test player runs on a fake clock, so playing to the end is instant.
+        val p = androidx.media3.test.utils.TestExoPlayerBuilder(context).build()
         val backend = Media3Backend(p, scope)
         p.setMediaSources(listOf(FakeMediaSource(), FakeMediaSource()))
         p.prepare()

@@ -23,6 +23,9 @@ import com.qurantime.kotlin.feature.audio.PlayerController
 import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
+import com.qurantime.kotlin.feature.downloads.Downloader
+import com.qurantime.kotlin.feature.downloads.DownloadsRepository
+import com.qurantime.kotlin.feature.downloads.WorkManagerDownloader
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
 import com.qurantime.kotlin.feature.explore.ExploreRepository
 import com.qurantime.kotlin.feature.live.LiveRepository
@@ -95,7 +98,10 @@ open class AppContainer(context: Context) {
     /** The app's one ExoPlayer, created on first use (not at start-up). */
     val player by lazy { buildPlayer(appContext) }
 
-    open val queue: QueueHandler by lazy { QueueHandler(Media3Backend(player, mainScope), localPathFor = { null }, mainScope) }
+    open val queue: QueueHandler by lazy { QueueHandler(Media3Backend(player, mainScope), localPathFor = downloads::localPathFor, mainScope) }
+
+    open val downloader: Downloader by lazy { WorkManagerDownloader(appContext) }
+    val downloads by lazy { DownloadsRepository(db.downloadsDao(), downloader, appContext.filesDir, appScope) }
 
     /** Set by the activity: asks for the notification permission (Android 13+), once. */
     var notificationPermission: (suspend () -> Unit)? = null

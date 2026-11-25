@@ -84,6 +84,8 @@ class MainActivity : ComponentActivity() {
             Choreographer.getInstance().postFrameCallback {
                 val lang = ApiLanguage.fromTag(container.settings.state.value.locale)
                 container.appScope.launch(Dispatchers.IO) { runCatching { container.catalog.suwar(lang) } }
+                // Catch up with downloads that finished while the app was closed.
+                container.appScope.launch { runCatching { container.downloads.reconcile() } }
                 // Bring back the last recitation, paused, where it was.
                 container.mainScope.launch { container.playerController.restore() }
             }

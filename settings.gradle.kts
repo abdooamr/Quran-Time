@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "QuranTime"
-include(":app")
+include(":app", ":benchmark", ":baselineprofile")

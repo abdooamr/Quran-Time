@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.qurantime.kotlin.core.api.Api
 import com.qurantime.kotlin.core.api.ApiClient
+import com.qurantime.kotlin.core.api.ApiLanguage
 import com.qurantime.kotlin.core.api.defaultHttpClient
 import com.qurantime.kotlin.core.cache.CachedFetcher
 import com.qurantime.kotlin.core.db.AppDatabase
@@ -25,6 +26,7 @@ import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
 import com.qurantime.kotlin.feature.explore.ExploreRepository
 import com.qurantime.kotlin.feature.live.LiveRepository
+import com.qurantime.kotlin.feature.mushaf.AyahGeometryRepository
 import com.qurantime.kotlin.feature.mushaf.MushafController
 import com.qurantime.kotlin.feature.mushaf.image.MaskCodec
 import com.qurantime.kotlin.feature.mushaf.image.OkHttpPageFetcher
@@ -122,6 +124,10 @@ open class AppContainer(context: Context) {
     /** Loads the saved bookmarks in the background as soon as anything asks for them. */
     val bookmarks by lazy {
         BookmarksRepository(db.bookmarksDao()).also { repo -> appScope.launch { repo.load() } }
+    }
+
+    val geometry by lazy {
+        AyahGeometryRepository(timing, db.ayahGeometryDao(), suwar = { catalog.suwar(ApiLanguage.AR) })
     }
 
     open val online: OnlineStatus by lazy {

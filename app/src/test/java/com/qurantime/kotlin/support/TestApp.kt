@@ -14,6 +14,9 @@ import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.settings.SettingsStore
 import com.qurantime.kotlin.core.theme.AppThemeMode
 import com.qurantime.kotlin.feature.audio.QueueHandler
+import com.qurantime.kotlin.feature.reciters.parseReciters
+import com.qurantime.kotlin.feature.timing.TimedReadMatcher
+import com.qurantime.kotlin.feature.timing.parseTimedReads
 import com.qurantime.kotlin.feature.mushaf.image.MaskCodec
 import com.qurantime.kotlin.feature.mushaf.image.PageImageStore
 import com.qurantime.kotlin.feature.mushaf.image.PageMask
@@ -58,8 +61,8 @@ class TestContainer(
     override val api get() = fixtureApi
     override val db: AppDatabase = memoryDb()
 
-    // API cache in a map: Robolectric's single-connection in-memory Room can stall
-    // a large cache write made from the main thread while the test drives the looper.
+    // API cache in a map: Room work started on the main thread only resumes when
+    // the main looper is drained (see [await]); a map keeps waitUntil-based tests simple.
     override val fetcher = CachedFetcher(MemoryApiCacheDao())
     override val settings = SettingsStore(
         PreferenceDataStoreFactory.create(scope = CoroutineScope(Dispatchers.IO + SupervisorJob())) {
@@ -75,6 +78,15 @@ class TestContainer(
     override val queue by lazy { QueueHandler(backend, { null }, mainScope) }
 
     override fun connectSession() {}
+
+    /** Built from the fixtures, as the Flutter TestDeps did: available offline in tests. */
+    override suspend fun matcher() = fixtureMatcher
+
+    companion object {
+        val fixtureMatcher by lazy {
+            TimedReadMatcher(parseTimedReads(loadFixtureJson("ayat_timing_reads.json")), parseReciters(loadFixtureJson("reciters_eng.json")))
+        }
+    }
 }
 
 /**
@@ -96,6 +108,18 @@ fun ComposeContentTestRule.launchApp(
     setContent { QuranTimeRoot(c) }
     waitForIdle()
     return c
+}
+
+/**
+ * Waits (up to 5 s) for [condition], draining the main looper on each check:
+ * work that background threads (Room, DataStore) post back to the main
+ * thread runs then, as it does on a phone.
+ */
+fun ComposeContentTestRule.await(timeoutMs: Long = 5_000, condition: () -> Boolean) {
+    waitUntil(timeoutMs) {
+        org.robolectric.shadows.ShadowLooper.idleMainLooper()
+        condition()
+    }
 }
 
 /** Waits (up to 5 s) for a node with [tag]; IO work runs on real threads. */

@@ -42,6 +42,8 @@ import com.qurantime.kotlin.feature.followalong.ui.RepeatAyahsButton
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarksScreen
 import com.qurantime.kotlin.feature.more.MoreScreen
 import com.qurantime.kotlin.feature.mushaf.ui.MushafScreen
+import com.qurantime.kotlin.feature.mushaf.ui.PlayPageButton
+import com.qurantime.kotlin.feature.settings.ui.MushafReciterScreen
 
 /** The app's dependencies, for screens to read. */
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("no AppContainer provided") }
@@ -66,7 +68,10 @@ fun QuranTimeRoot(container: AppContainer) {
             ) {
                 composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }, extras = { RepeatAyahsButton() }) }
                 tab<MushafTab, MushafRoute>(MushafRoute, {
-                    MushafScreen(headerActions = { page, _ -> BookmarkButton(page) })
+                    MushafScreen(headerActions = { page, suwar ->
+                        BookmarkButton(page)
+                        PlayPageButton(page, suwar)
+                    })
                 })
                 tab<ListenTab, ListenRoute>(ListenRoute, { TabPlaceholder(AppTab.LISTEN) })
                 tab<LiveTab, LiveRoute>(LiveRoute, { TabPlaceholder(AppTab.LIVE) })
@@ -76,7 +81,7 @@ fun QuranTimeRoot(container: AppContainer) {
                 tab<MoreTab, MoreRoute>(MoreRoute, { MoreScreen() }) {
                     composable<BookmarksRoute> { BookmarksScreen() }
                     composable<DownloadsRoute> { TitledPlaceholder(stringResource(R.string.downloads)) }
-                    composable<MushafReciterRoute> { TitledPlaceholder(stringResource(R.string.mushaf_reciter)) }
+                    composable<MushafReciterRoute> { MushafReciterScreen() }
                     composable<SettingsRoute> { TitledPlaceholder(stringResource(R.string.settings)) }
                     composable<AboutRoute> { TitledPlaceholder(stringResource(R.string.about)) }
                 }

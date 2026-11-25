@@ -1,6 +1,5 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -103,7 +103,7 @@ private fun SurahList(suwar: List<Surah>, currentPage: Int?, onJump: (Int) -> Un
         itemsIndexed(suwar, key = { _, s -> s.id }) { i, s ->
             val digits = localDigits(s.id, locale)
             ListItem(
-                modifier = Modifier.clickable { onJump(s.startPage) }.then(if (i == current) Modifier.background(selectedBg) else Modifier),
+                modifier = Modifier.clickable { onJump(s.startPage) }.then(if (i == current) Modifier.testTag("jump-selected") else Modifier),
                 colors = ListItemDefaults.colors(containerColor = if (i == current) selectedBg else MaterialTheme.colorScheme.surface),
                 leadingContent = { Roundel(numeral = digits, semanticLabel = digits, size = 44.dp) },
                 headlineContent = { Text(s.name, style = bookTitle()) },
@@ -125,7 +125,7 @@ private fun JuzList(currentPage: Int?, onJump: (Int) -> Unit) {
         items(JUZ_START_PAGES.size) { i ->
             val n = localDigits(i + 1, locale)
             ListItem(
-                modifier = Modifier.clickable { onJump(JUZ_START_PAGES[i]) },
+                modifier = Modifier.clickable { onJump(JUZ_START_PAGES[i]) }.then(if (i == current) Modifier.testTag("jump-selected") else Modifier),
                 colors = ListItemDefaults.colors(containerColor = if (i == current) selectedBg else MaterialTheme.colorScheme.surface),
                 leadingContent = { Roundel(numeral = n, semanticLabel = n, size = 44.dp) },
                 headlineContent = { Text(stringResource(R.string.juz_number, n), style = bookTitle()) },

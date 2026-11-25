@@ -137,7 +137,7 @@ open class AppContainer(context: Context) {
     private var matcherMemo: TimedReadMatcher? = null
 
     /** Built once from the timed reads and the reciter list; a failure (offline) is retried next time. */
-    suspend fun matcher(): TimedReadMatcher = matcherLock.withLock {
+    open suspend fun matcher(): TimedReadMatcher = matcherLock.withLock {
         matcherMemo ?: TimedReadMatcher(timing.reads(), reciters.all(ApiLanguage.fromTag(settings.state.value.locale))).also { matcherMemo = it }
     }
 

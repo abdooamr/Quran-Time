@@ -12,6 +12,9 @@ import kotlinx.coroutines.yield
 class FakePageFetcher : PageFetcher {
     val fetched: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
     var failNext = false
+
+    /** When true, downloads never finish (a very slow connection). */
+    var hang = false
     var failPages: Set<Int> = emptySet()
     var error: () -> IOException = { IOException("connection reset") }
 
@@ -21,6 +24,7 @@ class FakePageFetcher : PageFetcher {
 
     override suspend fun fetch(url: String, target: File) {
         fetched += url
+        if (hang) kotlinx.coroutines.awaitCancellation()
         yield()
         val page = Regex("""(\d+)\.svg$""").find(url)!!.groupValues[1].toInt()
         if (failNext || page in failPages) {

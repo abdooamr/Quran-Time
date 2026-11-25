@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
 import com.qurantime.kotlin.AppContainer
 import com.qurantime.kotlin.QuranTimeRoot
+import com.qurantime.kotlin.core.cache.CachedFetcher
 import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.settings.SettingsStore
 import com.qurantime.kotlin.core.theme.AppThemeMode
@@ -56,6 +57,10 @@ class TestContainer(
     val fixtureApi = FixtureApi()
     override val api get() = fixtureApi
     override val db: AppDatabase = memoryDb()
+
+    // API cache in a map: Robolectric's single-connection in-memory Room can stall
+    // a large cache write made from the main thread while the test drives the looper.
+    override val fetcher = CachedFetcher(MemoryApiCacheDao())
     override val settings = SettingsStore(
         PreferenceDataStoreFactory.create(scope = CoroutineScope(Dispatchers.IO + SupervisorJob())) {
             File(root, "settings.preferences_pb")

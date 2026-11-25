@@ -67,7 +67,7 @@ open class AppContainer(context: Context) {
 
     val http by lazy { defaultHttpClient() }
     open val api: Api by lazy { ApiClient(http) }
-    val fetcher by lazy { CachedFetcher(db.apiCacheDao()) }
+    open val fetcher by lazy { CachedFetcher(db.apiCacheDao()) }
 
     val catalog by lazy { CatalogRepository(api, fetcher) }
     val reciters by lazy { RecitersRepository(api, fetcher) }

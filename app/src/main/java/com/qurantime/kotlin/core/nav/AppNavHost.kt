@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import com.qurantime.kotlin.core.net.OnlineStatus
+import com.qurantime.kotlin.core.ui.LocalSnackbar
 import com.qurantime.kotlin.core.ui.OfflineBanner
 
 /** The navigation controller, for screens that move between tabs or open sub-screens. */
@@ -66,7 +67,7 @@ fun AppNavHost(
     CompositionLocalProvider(LocalNavController provides nav) {
         // The full player and the video player cover the whole screen.
         val fullScreen = entry?.destination?.let { it.hasRoute<PlayerRoute>() || it.hasRoute<VideoRoute>() } == true
-        Shell(current = current, onSelect = nav::openTab, bottomExtras = bottomExtras, showBottomBar = !fullScreen) { padding ->
+        Shell(current = current, onSelect = nav::openTab, bottomExtras = bottomExtras, showBottomBar = !fullScreen, snackbar = LocalSnackbar.current) { padding ->
             NavHost(nav, startDestination = MushafTab, modifier = Modifier.padding(padding), builder = destinations)
         }
     }

@@ -33,6 +33,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.rememberCoroutineScope
+import com.qurantime.kotlin.core.nav.AppTab
+import com.qurantime.kotlin.core.nav.LocalNavController
+import com.qurantime.kotlin.core.nav.MushafReciterRoute
+import com.qurantime.kotlin.core.nav.TafsirSurahRoute
+import com.qurantime.kotlin.core.nav.openTab
+import com.qurantime.kotlin.core.ui.LocalSnackbar
+import com.qurantime.kotlin.core.ui.say
+import com.qurantime.kotlin.feature.followalong.ui.RepeatRequest
+import com.qurantime.kotlin.feature.followalong.ui.RepeatSheetHost
+import com.qurantime.kotlin.feature.mushaf.AyahShape
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -62,9 +74,7 @@ import kotlin.math.abs
  */
 @Composable
 fun MushafScreen(
-    actions: @Composable RowScope.(page: Int, suwar: List<Surah>) -> Unit = { _, _ -> },
-    pageOverlay: @Composable (page: Int) -> Unit = { MushafPageView(it) },
-    belowPages: @Composable () -> Unit = {},
+    headerActions: @Composable RowScope.(page: Int, suwar: List<Surah>) -> Unit = { _, _ -> },
 ) {
     val container = LocalAppContainer.current
     val settings by container.settings.state.collectAsStateWithLifecycle()
@@ -94,6 +104,17 @@ fun MushafScreen(
         )
     }
 
+    // Follow-along: highlight, page turns, the actions of a tapped ayah, ayah repeats.
+    FollowEffect()
+    var tapped by remember { mutableStateOf<AyahShape?>(null) }
+    var repeat by remember { mutableStateOf<RepeatRequest?>(null) }
+    val names = (suwar as? Async.Data)?.value.orEmpty().associate { it.id to it.name }
+    val actions = rememberAyahActions(names) { repeat = it }
+    tapped?.let { shape ->
+        AyahActionsSheet(shape, names[shape.surah] ?: "${shape.surah}", actions, onDismiss = { tapped = null })
+    }
+    repeat?.let { RepeatSheetHost(it, onDone = { repeat = null }) }
+
     // Start-up is "fully drawn" once the opening page is on screen.
     val drawn by container.mushaf.firstPageDrawn.collectAsStateWithLifecycle()
     ReportDrawnWhen { drawn }
@@ -104,14 +125,56 @@ fun MushafScreen(
         Header(
             suwar = list,
             onRetry = if (suwar is Async.Failed) ({ attempt++ }) else null,
-            actions = actions,
+            actions = headerActions,
             onOpenJump = { jumpSuwar = it },
         )
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            MushafPager(pageOverlay)
-            belowPages()
+            MushafPager { page -> HighlightedPage(page, onAyah = { tapped = it }) }
+            BackToRecitation()
         }
     }
+}
+
+/** The actions of a tapped ayah: play from it, repeat it, bookmark it, open the surah's tafsir. */
+@Composable
+private fun rememberAyahActions(names: Map<Int, String>, onRepeat: (RepeatRequest) -> Unit): AyahActions {
+    val c = LocalAppContainer.current
+    val nav = LocalNavController.current
+    val snackbar = LocalSnackbar.current
+    val scope = rememberCoroutineScope()
+    val missing = stringResource(R.string.reciter_missing_surah)
+    val change = stringResource(R.string.change)
+    val error = stringResource(R.string.error_generic)
+    val bookmarked = stringResource(R.string.ayah_bookmarked)
+    return AyahActions(
+        playFromHere = { shape ->
+            scope.launch {
+                val ok = try {
+                    c.follow.playFromAyah(shape.surah, shape.ayah)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    snackbar.say(error)
+                    return@launch
+                }
+                if (!ok && snackbar.say(missing, change)) {
+                    nav.openTab(AppTab.MORE)
+                    nav.navigate(MushafReciterRoute)
+                }
+            }
+        },
+        repeat = { shape -> onRepeat(RepeatRequest(shape.surah, names[shape.surah] ?: "${shape.surah}", shape.ayah, shape.ayah)) },
+        bookmark = { shape ->
+            scope.launch {
+                c.bookmarks.addAyah(shape.surah, shape.ayah, shape.page)
+                snackbar.say(bookmarked)
+            }
+        },
+        tafsir = { shape ->
+            nav.openTab(AppTab.EXPLORE)
+            nav.navigate(TafsirSurahRoute(tafsirId = 1, surah = shape.surah))
+        },
+    )
 }
 
 private val SIDE = 104.dp

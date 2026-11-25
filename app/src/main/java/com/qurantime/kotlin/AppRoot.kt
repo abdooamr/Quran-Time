@@ -28,6 +28,7 @@ import com.qurantime.kotlin.core.nav.MushafReciterRoute
 import com.qurantime.kotlin.core.nav.MushafRoute
 import com.qurantime.kotlin.core.nav.MushafTab
 import com.qurantime.kotlin.core.nav.SettingsRoute
+import com.qurantime.kotlin.core.nav.TafsirSurahRoute
 import com.qurantime.kotlin.core.nav.TabPlaceholder
 import com.qurantime.kotlin.core.nav.TitledPlaceholder
 import com.qurantime.kotlin.core.nav.tab
@@ -37,6 +38,7 @@ import com.qurantime.kotlin.core.ui.OfflineBanner
 import com.qurantime.kotlin.feature.audio.ui.FullPlayer
 import com.qurantime.kotlin.feature.audio.ui.MiniPlayer
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarkButton
+import com.qurantime.kotlin.feature.followalong.ui.RepeatAyahsButton
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarksScreen
 import com.qurantime.kotlin.feature.more.MoreScreen
 import com.qurantime.kotlin.feature.mushaf.ui.MushafScreen
@@ -48,7 +50,8 @@ val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("no AppCo
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun QuranTimeRoot(container: AppContainer) {
-    CompositionLocalProvider(LocalAppContainer provides container) {
+    val snackbar = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
+    CompositionLocalProvider(LocalAppContainer provides container, com.qurantime.kotlin.core.ui.LocalSnackbar provides snackbar) {
         // Test tags double as resource ids, so benchmarks can find the pager.
         Box(Modifier.semantics { testTagsAsResourceId = true }) {
           SettingsDrivenApp(container.settings) {
@@ -61,13 +64,15 @@ fun QuranTimeRoot(container: AppContainer) {
                     MiniPlayer(onOpen = { nav.navigate(PlayerRoute) { launchSingleTop = true } })
                 },
             ) {
-                composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }) }
+                composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }, extras = { RepeatAyahsButton() }) }
                 tab<MushafTab, MushafRoute>(MushafRoute, {
-                    MushafScreen(actions = { page, _ -> BookmarkButton(page) })
+                    MushafScreen(headerActions = { page, _ -> BookmarkButton(page) })
                 })
                 tab<ListenTab, ListenRoute>(ListenRoute, { TabPlaceholder(AppTab.LISTEN) })
                 tab<LiveTab, LiveRoute>(LiveRoute, { TabPlaceholder(AppTab.LIVE) })
-                tab<ExploreTab, ExploreRoute>(ExploreRoute, { TabPlaceholder(AppTab.EXPLORE) })
+                tab<ExploreTab, ExploreRoute>(ExploreRoute, { TabPlaceholder(AppTab.EXPLORE) }) {
+                    composable<TafsirSurahRoute> { TitledPlaceholder(stringResource(R.string.tab_explore)) }
+                }
                 tab<MoreTab, MoreRoute>(MoreRoute, { MoreScreen() }) {
                     composable<BookmarksRoute> { BookmarksScreen() }
                     composable<DownloadsRoute> { TitledPlaceholder(stringResource(R.string.downloads)) }

@@ -103,13 +103,17 @@ fun MushafPageView(
         val fittedW = (box.width * scaleDp).dp
         val fittedH = (box.height * scaleDp).dp
         val density = LocalDensity.current
-        val widthPx = with(density) { fittedW.roundToPx() }.coerceAtLeast(1)
-        if (page > 2) SideEffect { container.mushaf.pageWidthPx = widthPx }
+        val shownPx = with(density) { fittedW.roundToPx() }.coerceAtLeast(1)
+        // The image is made for the full available width, not the height-fitted
+        // width: the mini player or a banner changing the height then doesn't
+        // make every page convert again. Drawing scales it down slightly.
+        val renderPx = with(density) { (maxWidth - frame).roundToPx() }.coerceAtLeast(shownPx)
+        if (page > 2) SideEffect { container.mushaf.pageWidthPx = renderPx }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             GiltFrame {
                 Box(Modifier.size(fittedW, fittedH)) {
-                    PageArt(page, widthPx, scale = widthPx / box.width, overlays, onTapViewBox)
+                    PageArt(page, renderPx, scale = shownPx / box.width, overlays, onTapViewBox)
                 }
             }
             Box(Modifier.padding(top = 6.dp)) {

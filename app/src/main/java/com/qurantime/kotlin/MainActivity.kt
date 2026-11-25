@@ -1,6 +1,7 @@
 package com.qurantime.kotlin
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.qurantime.kotlin.core.api.ApiLanguage
+import com.qurantime.kotlin.core.l10n.AppLocale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -38,6 +40,14 @@ class MainActivity : ComponentActivity() {
 
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
+    /** The language the activity was created in (dialogs and sheets use it). */
+    private var appliedLocale = "ar"
+
+    override fun attachBaseContext(newBase: Context) {
+        appliedLocale = AppLocale.saved(newBase)
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         container.notificationPermission = {
             if (Build.VERSION.SDK_INT >= 33 &&
@@ -52,6 +62,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             container.settings.load()
+            // The activity's own language (used by dialogs and sheets) must match
+            // the setting; if not, re-create behind the splash before anything shows.
+            if (container.settings.state.value.locale != appliedLocale) {
+                AppLocale.save(this@MainActivity, container.settings.state.value.locale)
+                recreate()
+                return@launch
+            }
+            launch {
+                container.settings.state.collect { s ->
+                    if (s.locale != appliedLocale) {
+                        AppLocale.save(this@MainActivity, s.locale)
+                        recreate()
+                    }
+                }
+            }
             // Decode the opening page while the first frame is being built.
             warmOpeningPage()
             settingsLoaded = true

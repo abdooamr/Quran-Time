@@ -44,7 +44,10 @@ import com.qurantime.kotlin.feature.bookmarks.ui.BookmarkButton
 import com.qurantime.kotlin.feature.followalong.ui.RepeatAyahsButton
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarksScreen
 import com.qurantime.kotlin.feature.more.MoreScreen
+import androidx.navigation.toRoute
+import com.qurantime.kotlin.feature.reciters.ui.MoshafSurahsScreen
 import com.qurantime.kotlin.feature.reciters.ui.RecentScreen
+import com.qurantime.kotlin.feature.reciters.ui.ReciterScreen
 import com.qurantime.kotlin.feature.reciters.ui.RecitersScreen
 import com.qurantime.kotlin.feature.mushaf.ui.MushafScreen
 import com.qurantime.kotlin.feature.mushaf.ui.PlayPageButton
@@ -80,8 +83,11 @@ fun QuranTimeRoot(container: AppContainer) {
                 })
                 tab<ListenTab, ListenRoute>(ListenRoute, { RecitersScreen() }) {
                     composable<RecentRoute> { RecentScreen() }
-                    composable<ReciterRoute> { TitledPlaceholder(stringResource(R.string.tab_listen)) }
-                    composable<MoshafRoute> { TitledPlaceholder(stringResource(R.string.tab_listen)) }
+                    composable<ReciterRoute> { ReciterScreen(it.toRoute<ReciterRoute>().id) }
+                    composable<MoshafRoute> {
+                        val r = it.toRoute<MoshafRoute>()
+                        MoshafSurahsScreen(r.reciterId, r.moshafId)
+                    }
                 }
                 tab<LiveTab, LiveRoute>(LiveRoute, { TabPlaceholder(AppTab.LIVE) })
                 tab<ExploreTab, ExploreRoute>(ExploreRoute, { TabPlaceholder(AppTab.EXPLORE) }) {

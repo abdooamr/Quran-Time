@@ -34,7 +34,10 @@ import com.qurantime.kotlin.feature.mushaf.image.PageImageStore
 import com.qurantime.kotlin.feature.mushaf.image.RawDeflateMaskCodec
 import com.qurantime.kotlin.feature.mushaf.ui.PageBitmapCache
 import com.qurantime.kotlin.feature.reciters.RecitersRepository
+import com.qurantime.kotlin.feature.followalong.FollowAlongController
+import com.qurantime.kotlin.feature.timing.TimedReadMatcher
 import com.qurantime.kotlin.feature.timing.TimingRepository
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -128,6 +131,25 @@ open class AppContainer(context: Context) {
 
     val geometry by lazy {
         AyahGeometryRepository(timing, db.ayahGeometryDao(), suwar = { catalog.suwar(ApiLanguage.AR) })
+    }
+
+    private val matcherLock = kotlinx.coroutines.sync.Mutex()
+    private var matcherMemo: TimedReadMatcher? = null
+
+    /** Built once from the timed reads and the reciter list; a failure (offline) is retried next time. */
+    suspend fun matcher(): TimedReadMatcher = matcherLock.withLock {
+        matcherMemo ?: TimedReadMatcher(timing.reads(), reciters.all(ApiLanguage.fromTag(settings.state.value.locale))).also { matcherMemo = it }
+    }
+
+    val follow by lazy {
+        FollowAlongController(
+            player = playerController,
+            timing = timing,
+            matcher = ::matcher,
+            suwar = { catalog.suwar(ApiLanguage.fromTag(settings.state.value.locale)) },
+            settings = settings,
+            scope = mainScope,
+        )
     }
 
     open val online: OnlineStatus by lazy {

@@ -24,12 +24,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.qurantime.kotlin.R
 
-enum class AppTab(val route: Any, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
-    MUSHAF(MushafRoute, R.string.tab_mushaf, Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
-    LISTEN(ListenRoute, R.string.tab_listen, Icons.Outlined.Headphones, Icons.Filled.Headphones),
-    LIVE(LiveRoute, R.string.tab_live, Icons.Outlined.Radio, Icons.Filled.Radio),
-    EXPLORE(ExploreRoute, R.string.tab_explore, Icons.Outlined.Explore, Icons.Filled.Explore),
-    MORE(MoreRoute, R.string.tab_more, Icons.Filled.MoreHoriz, Icons.Filled.MoreHoriz),
+enum class AppTab(val graph: Any, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
+    MUSHAF(MushafTab, R.string.tab_mushaf, Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
+    LISTEN(ListenTab, R.string.tab_listen, Icons.Outlined.Headphones, Icons.Filled.Headphones),
+    LIVE(LiveTab, R.string.tab_live, Icons.Outlined.Radio, Icons.Filled.Radio),
+    EXPLORE(ExploreTab, R.string.tab_explore, Icons.Outlined.Explore, Icons.Filled.Explore),
+    MORE(MoreTab, R.string.tab_more, Icons.Filled.MoreHoriz, Icons.Filled.MoreHoriz),
 }
 
 /**

@@ -2,7 +2,14 @@ package com.qurantime.kotlin.core.nav
 
 import kotlinx.serialization.Serializable
 
-// Tabs
+// Tab graphs: each tab is a nested graph with its own back stack.
+@Serializable data object MushafTab
+@Serializable data object ListenTab
+@Serializable data object LiveTab
+@Serializable data object ExploreTab
+@Serializable data object MoreTab
+
+// Tab start screens
 @Serializable data object MushafRoute
 @Serializable data object ListenRoute
 @Serializable data object LiveRoute

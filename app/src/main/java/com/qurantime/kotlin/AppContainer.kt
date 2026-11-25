@@ -12,6 +12,7 @@ import com.qurantime.kotlin.core.db.AppDatabase
 import com.qurantime.kotlin.core.net.ConnectivityOnlineStatus
 import com.qurantime.kotlin.core.net.OnlineStatus
 import com.qurantime.kotlin.core.settings.SettingsStore
+import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
 import com.qurantime.kotlin.feature.explore.ExploreRepository
 import com.qurantime.kotlin.feature.live.LiveRepository
@@ -26,6 +27,7 @@ import com.qurantime.kotlin.feature.timing.TimingRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * The app's dependency graph, written by hand (no DI framework).
@@ -71,6 +73,11 @@ open class AppContainer(context: Context) {
             prefetch = { page, width -> pages.prefetchAround(page, width) },
             scope = appScope,
         )
+    }
+
+    /** Loads the saved bookmarks in the background as soon as anything asks for them. */
+    val bookmarks by lazy {
+        BookmarksRepository(db.bookmarksDao()).also { repo -> appScope.launch { repo.load() } }
     }
 
     open val online: OnlineStatus by lazy {

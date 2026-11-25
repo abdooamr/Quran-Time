@@ -164,6 +164,13 @@ private fun MushafPager(pageContent: @Composable (page: Int) -> Unit) {
     var jumpTarget by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(pager) {
+        // Coming back to the tab restores the pager's old page; a jump made
+        // meanwhile (from Bookmarks, say) wins.
+        val want = mushaf.currentPage.value - 1
+        if (pager.currentPage != want) {
+            jumpTarget = want
+            pager.scrollToPage(want)
+        }
         snapshotFlow { pager.settledPage }.collect { i ->
             val page = i + 1
             val byJump = jumpTarget == i

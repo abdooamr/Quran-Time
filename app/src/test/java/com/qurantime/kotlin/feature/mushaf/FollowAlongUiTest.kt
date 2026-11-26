@@ -69,6 +69,18 @@ class FollowAlongUiTest {
     }
 
     @Test
+    fun `the full player shows the page being recited, highlighted`() {
+        val c = start(page = 3)
+        c.recite(7)
+        rule.onNodeWithTag("mini-player").performClick()
+        val inPlayer = { tag: String -> androidx.compose.ui.test.hasTestTag(tag) and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("full-player")) }
+        rule.await { rule.onAllNodes(inPlayer("mushaf-highlight-3"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNode(inPlayer("mushaf-highlight-3"), useUnmergedTree = true).assert(SemanticsMatcher.expectValue(HighlightedAyah, 7))
+        c.playerController.stop()
+        rule.waitForIdle()
+    }
+
+    @Test
     fun `turns the page when the recitation moves on`() {
         val c = start(page = 2)
         c.recite(1)
@@ -130,6 +142,19 @@ class AyahActionsTest {
         rule.tapViewBox(3, Offset(300f, 100f))
         awaitText("Al-Baqarah: 7")
         rule.onNodeWithText("Play from here").assertExists()
+    }
+
+    @Test
+    fun `the tapped ayah is marked on the page while its actions are open`() {
+        open()
+        rule.tapViewBox(3, Offset(300f, 100f))
+        awaitText("Al-Baqarah: 7")
+        rule.onNode(androidx.compose.ui.test.hasTestTag("mushaf-selection-3"), useUnmergedTree = true).assertExists()
+        // Choosing an action closes the sheet; the mark goes with it.
+        rule.onNodeWithText("Bookmark this ayah").performClick()
+        rule.await {
+            rule.onAllNodes(androidx.compose.ui.test.hasTestTag("mushaf-selection-3"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     @Test

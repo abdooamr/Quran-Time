@@ -1,5 +1,10 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -138,6 +143,50 @@ fun Roundel(numeral: String, semanticLabel: String, caption: String? = null, siz
                 color = color,
             )
         }
+    }
+}
+
+/** The roundel's gilt rim (double ring and eight petals) around any content. */
+fun Modifier.giltRing(gilt: Color): Modifier = drawBehind {
+    val c = center
+    val r = size.minDimension / 2
+    drawCircle(gilt, r - 1.dp.toPx(), c, style = Stroke(1.3.dp.toPx()))
+    drawCircle(gilt, r - 4.5.dp.toPx(), c, style = Stroke(0.7.dp.toPx()))
+    for (i in 0 until 8) {
+        val a = i * PI / 4 - PI / 2
+        val rr = r - 1.dp.toPx()
+        drawCircle(gilt, 1.6.dp.toPx(), c + Offset((cos(a) * rr).toFloat(), (sin(a) * rr).toFloat()))
+    }
+}
+
+/**
+ * The play control as a seal: the cartouche's green field in a circle, with
+ * its double gilt rule. Used wherever a recitation is started or paused.
+ */
+@Composable
+fun PlaySeal(playing: Boolean, onClick: () -> Unit, label: String, size: Dp, modifier: Modifier = Modifier) {
+    val p = LocalMushafPalette.current
+    Box(
+        modifier
+            .size(size)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label }
+            .drawBehind {
+                val c = center
+                val r = this.size.minDimension / 2
+                drawCircle(p.field, r, c)
+                drawCircle(p.gilt, r - 1.dp.toPx(), c, style = Stroke(1.4.dp.toPx()))
+                drawCircle(p.gilt, r - 4.dp.toPx(), c, style = Stroke(0.8.dp.toPx()))
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+            contentDescription = null,
+            tint = p.onField,
+            modifier = Modifier.size(size * 0.48f),
+        )
     }
 }
 

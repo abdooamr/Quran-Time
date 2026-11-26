@@ -1,5 +1,6 @@
 package com.qurantime.kotlin
 
+import com.qurantime.kotlin.core.nav.openTab
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -98,7 +99,18 @@ fun QuranTimeRoot(container: AppContainer, nav: NavHostController = rememberNavC
                     val v = it.toRoute<VideoRoute>()
                     VideoPlayerScreen(v.url, v.title, v.live, onClose = { nav.popBackStack() })
                 }
-                composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }, extras = { RepeatAyahsButton() }) }
+                composable<PlayerRoute> {
+                    FullPlayer(
+                        onClose = { nav.popBackStack() },
+                        // Tapping the page read along: go and read it in the Mushaf.
+                        onOpenPage = { page ->
+                            nav.popBackStack()
+                            nav.openTab(AppTab.MUSHAF)
+                            container.mushaf.goTo(page)
+                        },
+                        extras = { RepeatAyahsButton() },
+                    )
+                }
                 tab<MushafTab, MushafRoute>(MushafRoute, {
                     MushafScreen(headerActions = { page, suwar ->
                         BookmarkButton(page)

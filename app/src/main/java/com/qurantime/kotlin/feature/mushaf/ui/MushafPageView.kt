@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -113,6 +114,7 @@ fun MushafPageView(
     page: Int,
     overlays: @Composable BoxScope.(scale: Float) -> Unit = {},
     onTapViewBox: ((Offset) -> Unit)? = null,
+    preview: Boolean = false,
 ) {
     val container = LocalAppContainer.current
     val box = viewBoxForPage(page)
@@ -125,15 +127,21 @@ fun MushafPageView(
         val fittedH = (box.height * scaleDp).dp
         val density = LocalDensity.current
         val shownPx = with(density) { fittedW.roundToPx() }.coerceAtLeast(1)
-        val renderPx = with(density) {
-            renderWidthPx(maxWidth.roundToPx(), maxHeight.roundToPx(), frame.roundToPx(), folio.roundToPx(), MINI_PLAYER_ALLOWANCE.roundToPx(), box)
-        }.coerceAtLeast(shownPx)
-        if (page > 2) SideEffect { container.mushaf.pageWidthPx = renderPx }
+        // A preview (the full player) shows the reading-size image scaled down:
+        // it must not make images of its own size or change the reading width.
+        val renderPx = if (preview) {
+            container.mushaf.pageWidthPx
+        } else {
+            with(density) {
+                renderWidthPx(maxWidth.roundToPx(), maxHeight.roundToPx(), frame.roundToPx(), folio.roundToPx(), MINI_PLAYER_ALLOWANCE.roundToPx(), box)
+            }.coerceAtLeast(shownPx)
+        }
+        if (page > 2 && !preview) SideEffect { container.mushaf.pageWidthPx = renderPx }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             GiltFrame {
                 Box(Modifier.size(fittedW, fittedH)) {
-                    PageArt(page, renderPx, scale = shownPx / box.width, overlays, onTapViewBox)
+                    PageArt(page, renderPx, scale = shownPx / box.width, overlays, onTapViewBox, preview)
                 }
             }
             Box(Modifier.padding(top = 6.dp)) {
@@ -151,6 +159,7 @@ private fun BoxScope.PageArt(
     scale: Float,
     overlays: @Composable BoxScope.(scale: Float) -> Unit,
     onTapViewBox: ((Offset) -> Unit)?,
+    preview: Boolean,
 ) {
     val container = LocalAppContainer.current
     var attempt by remember { mutableIntStateOf(0) }
@@ -188,7 +197,7 @@ private fun BoxScope.PageArt(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .zoomGestures(zoom)
+                    .then(if (preview) Modifier else Modifier.zoomGestures(zoom))
                     .graphicsLayer {
                         scaleX = zoom.scale
                         scaleY = zoom.scale
@@ -212,7 +221,13 @@ private fun BoxScope.PageArt(
                             },
                         ),
                 ) {
-                    drawImage(image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()), colorFilter = tint)
+                    // Scaled well down in a preview: filter it so thin strokes stay smooth.
+                    drawImage(
+                        image,
+                        dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
+                        colorFilter = tint,
+                        filterQuality = if (preview) FilterQuality.High else FilterQuality.Low,
+                    )
                 }
                 overlays(scale)
             }

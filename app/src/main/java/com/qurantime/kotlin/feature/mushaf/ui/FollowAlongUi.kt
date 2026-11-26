@@ -1,9 +1,18 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.BorderStroke
+import com.qurantime.kotlin.feature.timing.AyahTiming
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
@@ -12,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,35 +55,63 @@ import kotlinx.coroutines.launch
 val HighlightedAyah = SemanticsPropertyKey<Int>("HighlightedAyah")
 private var SemanticsPropertyReceiver.highlightedAyah by HighlightedAyah
 
-/** The recited ayah's outline, filled with the theme's highlight, in viewBox units × [scale]. */
+/**
+ * The recited ayah: a faint wash over the whole ayah, filled at full strength
+ * right to left, line by line, as it is recited (the reading sweep). With
+ * animations off, the whole ayah is lit at once.
+ */
 @Composable
-fun BoxScope.HighlightOverlay(page: Int, ayah: Int, polygon: List<Offset>, scale: Float) {
+fun BoxScope.HighlightOverlay(page: Int, timing: AyahTiming, scale: Float) {
+    val c = LocalAppContainer.current
     val color = LocalMushafPalette.current.highlight
-    val path = remember(polygon, scale) {
-        Path().apply {
-            polygon.forEachIndexed { i, p -> if (i == 0) moveTo(p.x * scale, p.y * scale) else lineTo(p.x * scale, p.y * scale) }
-            close()
-        }
-    }
-    Canvas(Modifier.fillMaxSize().testTag("mushaf-highlight-$page").semantics { highlightedAyah = ayah }) {
-        drawPath(path, color)
+    val polygon = timing.polygon ?: return
+    val lines = remember(polygon) { ayahLines(polygon) }
+    val outline = remember(polygon, scale) { roundedOutline(polygon, scale, washRadius(lines, scale)) }
+    val reduceMotion = rememberReduceMotion()
+    val progress = rememberAyahProgress(c.playerController.positionMs, { c.playerController.currentPositionMs }, timing.startMs, timing.endMs)
+    Canvas(Modifier.fillMaxSize().testTag("mushaf-highlight-$page").semantics { highlightedAyah = timing.ayah }) {
+        // Progress is read here, while drawing: only this layer redraws as it moves.
+        drawRecitationWash(outline, lines, scale, if (reduceMotion) 1f else progress.value, color)
     }
 }
 
-/** A page with the recited ayah highlighted when it is on this page; taps on an ayah call [onAyah]. */
+/** The tapped ayah, marked while its actions are open. */
 @Composable
-fun HighlightedPage(page: Int, onAyah: (AyahShape) -> Unit) {
+fun BoxScope.SelectionOverlay(page: Int, shape: AyahShape, scale: Float) {
+    val palette = LocalMushafPalette.current
+    val outline = remember(shape.polygon, scale) {
+        roundedOutline(shape.polygon, scale, washRadius(ayahLines(shape.polygon), scale))
+    }
+    Canvas(Modifier.fillMaxSize().testTag("mushaf-selection-$page")) {
+        drawSelection(outline, palette.highlight, palette.gilt)
+    }
+}
+
+/**
+ * A page with the recited ayah highlighted when it is on this page, and the
+ * [selected] (tapped) ayah marked; taps on an ayah call [onAyah].
+ */
+@Composable
+fun HighlightedPage(page: Int, selected: AyahShape? = null, preview: Boolean = false, onAyah: (AyahShape) -> Unit) {
     val c = LocalAppContainer.current
     val snackbar = LocalSnackbar.current
     val scope = rememberCoroutineScope()
     val error = stringResource(R.string.error_generic)
+    val reduceMotion = rememberReduceMotion()
     // Only this page's highlight is read here, so other pages don't redraw when the ayah changes.
     val highlight by remember(page) {
         c.follow.state.map { f -> f.current?.takeIf { f.active && it.page == page && it.polygon != null } }
     }.collectAsStateWithLifecycle(null)
     MushafPageView(
         page = page,
-        overlays = { scale -> highlight?.let { HighlightOverlay(page, it.ayah, it.polygon!!, scale) } },
+        preview = preview,
+        overlays = { scale ->
+            // One ayah hands over to the next: the old wash dissolves as the new one appears.
+            Crossfade(targetState = highlight, animationSpec = tween(if (reduceMotion) 0 else 260), label = "ayah") { h ->
+                Box(Modifier.fillMaxSize()) { h?.let { HighlightOverlay(page, it, scale) } }
+            }
+            selected?.takeIf { it.page == page }?.let { SelectionOverlay(page, it, scale) }
+        },
         onTapViewBox = { point ->
             scope.launch {
                 val shapes = try {
@@ -123,18 +159,26 @@ fun BoxScope.BackToRecitation() {
         visible = f.active && paused && page != null && page != current,
         enter = fadeIn(),
         exit = fadeOut(),
-        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp),
+        // In the folio band under the page frame: it may cover the page number for a moment, never the text.
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
     ) {
-        FilledTonalButton(
+        // A chrome pill with a gilt hairline: the book's apparatus, floating over the page's ground.
+        val palette = LocalMushafPalette.current
+        Surface(
             onClick = {
                 c.mushaf.resumeFollow()
                 page?.let { c.mushaf.goTo(it) }
             },
+            shape = CircleShape,
+            color = palette.chrome,
+            border = BorderStroke(0.8.dp, palette.gilt),
             modifier = Modifier.heightIn(min = 48.dp),
         ) {
-            Icon(Icons.Rounded.GraphicEq, null, Modifier.size(18.dp))
-            androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.back_to_recitation))
+            Row(Modifier.padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.GraphicEq, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.back_to_recitation), style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }

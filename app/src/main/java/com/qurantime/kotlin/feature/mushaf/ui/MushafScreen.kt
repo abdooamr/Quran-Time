@@ -133,7 +133,7 @@ fun MushafScreen(
             onOpenJump = { jumpSuwar = it },
         )
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            MushafPager { page -> HighlightedPage(page, onAyah = { tapped = it }) }
+            MushafPager { page -> HighlightedPage(page, selected = tapped, onAyah = { tapped = it }) }
             BackToRecitation()
         }
     }

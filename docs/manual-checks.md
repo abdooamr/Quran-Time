@@ -51,3 +51,11 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Notification Stop, reopen the app, Play. Expected: it plays.
 - [ ] Read in landscape, swipe a few pages. Expected: pages sharp, memory stays near portrait levels (`dumpsys meminfo`), "saved on this phone" barely grows.
 - [ ] Start "Download all pages", then Cancel. Expected: it stops; pages already saved stay.
+
+## Reading along and the players (design revision)
+
+- [ ] Play a page with a timed reciter. Expected: the ayah's wash fills right to left, line by line, in time; the next ayah takes over with a soft fade.
+- [ ] Settings → Accessibility → Remove animations, then play. Expected: the whole ayah is lit at once; no sweep.
+- [ ] Tap an ayah. Expected: a gilt hairline outlines it while its actions are open.
+- [ ] Open the full player during a timed recitation. Expected: the recited page with the sweep; tapping it opens that page in the Mushaf.
+- [ ] TalkBack on the seek bar and the play seal. Expected: they read and adjust as before.

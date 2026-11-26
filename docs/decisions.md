@@ -143,3 +143,10 @@ Every deviation from the plan, as recorded in the execution ledger, in the order
 - SVG LRU stamps run ahead of the clock after a big pack.
 - Review Focus 3 test makes the fetcher fail rather than the mask write (the write path is handled, not tested).
 - initialLoad() runs on every recomposition of PageArt (only the first value is used).
+
+## Release pass (2026-11-26)
+
+- Fixed: a damaged mask's payload length is bounded (deflate can't grow the pixels by more than ~0.1% + 1 KB) before anything is allocated — `an absurd payload length is rejected before allocating` RED (OutOfMemoryError) → GREEN.
+- Fixed: the play seal takes touches across at least 48 dp (drawn at 44 dp in the mini player) — `the mini player's play seal is a full 48dp target` RED → GREEN.
+- Fixed: with Remove animations on, the header's juz/surah and the Back-to-recitation pill cut instead of fading — `with animations off the header cuts to the new juz` RED → GREEN.
+- Known flaky: the follow-along UI tests occasionally time out (5 s) waiting for page art when the whole suite runs on a loaded machine; they pass alone and on re-run. Cost: an occasional red CI run that a re-run clears.

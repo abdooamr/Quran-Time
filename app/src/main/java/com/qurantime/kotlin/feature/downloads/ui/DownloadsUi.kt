@@ -45,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -212,7 +213,11 @@ private fun PagePackCard() {
             if (p != null) {
                 LinearProgressIndicator(progress = { if (p.total == 0) 0f else p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(6.dp))
-                Text("${localDigits(p.done, locale)} / ${localDigits(p.total, locale)}")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("${localDigits(p.done, locale)} / ${localDigits(p.total, locale)}", Modifier.weight(1f))
+                    // The pack keeps going in the background (maybe on mobile data): let it be stopped.
+                    TextButton(onClick = { c.pagePack.cancel() }) { Text(stringResource(R.string.cancel)) }
+                }
             } else {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilledTonalButton(onClick = { c.pagePack.start(c.mushaf.pageWidthPx) }) {

@@ -51,4 +51,27 @@ class ReleaseConfigTest {
         assertNotEquals(0, context.applicationInfo.icon)
         assertNotEquals(0, context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName))
     }
+
+    // Review: Auto Backup skips an app entirely above 25 MB; the ~80 MB of
+    // pages and downloaded audio (both re-downloadable) must not count.
+    private fun excludes(xmlId: Int): Set<String> {
+        val parser = context.resources.getXml(xmlId)
+        val out = mutableSetOf<String>()
+        while (parser.next() != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+            if (parser.eventType == org.xmlpull.v1.XmlPullParser.START_TAG && parser.name == "exclude") {
+                out += parser.getAttributeValue(null, "domain") + ":" + parser.getAttributeValue(null, "path")
+            }
+        }
+        return out
+    }
+
+    @Test
+    fun `backups leave out the pages and downloaded audio`() {
+        val wanted = setOf("file:mushaf/", "file:audio/")
+        assertTrue(excludes(R.xml.backup_rules).containsAll(wanted))
+        assertTrue(excludes(R.xml.data_extraction_rules).containsAll(wanted))
+        val manifest = java.io.File("src/main/AndroidManifest.xml").readText()
+        assertTrue(manifest.contains("android:fullBackupContent=\"@xml/backup_rules\""))
+        assertTrue(manifest.contains("android:dataExtractionRules=\"@xml/data_extraction_rules\""))
+    }
 }

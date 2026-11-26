@@ -130,4 +130,22 @@ class MushafScreenTest {
         rule.await { com.qurantime.kotlin.support.LegacyFriendlyCodec.decodes.get() > before }
         rule.awaitTag("mushaf-page-art-50")
     }
+
+    // Review (Focus 1): a page file damaged in place (right length, bad data)
+    // is made again instead of leaving the page "offline" for good.
+    @Test
+    fun `a damaged page file is made again`() {
+        val c = rule.launchApp(lastPage = 50)
+        rule.awaitTag("mushaf-page-art-50")
+        val file = c.root.walkTopDown().first { it.isFile && it.name == "050.qtr" }
+        val bytes = file.readBytes()
+        for (i in 12 until bytes.size) bytes[i] = 0x5A // keep the header and length, ruin the data
+        file.writeBytes(bytes)
+        c.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) // drop it and read it again
+        rule.await {
+            runCatching { file.inputStream().use { com.qurantime.kotlin.feature.mushaf.image.RawDeflateMaskCodec.decodeMask(it) } }.isSuccess
+        }
+        rule.awaitTag("mushaf-page-art-50")
+        assertTrue(rule.onAllNodes(androidx.compose.ui.test.hasTestTag("mushaf-page-offline-50")).fetchSemanticsNodes().isEmpty())
+    }
 }

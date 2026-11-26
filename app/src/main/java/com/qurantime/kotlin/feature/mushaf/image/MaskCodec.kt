@@ -26,6 +26,9 @@ interface MaskCodec {
     fun decode(input: InputStream): Bitmap
 }
 
+private const val MAX_MASK_WIDTH = 4096
+private const val MAX_MASK_HEIGHT = 8192
+
 private val MAGIC = byteArrayOf('Q'.code.toByte(), 'T'.code.toByte(), 'M'.code.toByte(), '1'.code.toByte())
 
 private fun writeFile(out: OutputStream, m: PageMask, payload: ByteArray) {
@@ -47,7 +50,9 @@ private fun readFile(input: InputStream): Triple<Int, Int, ByteArray> = try {
     val w = d.readUnsignedShort()
     val h = d.readUnsignedShort()
     val n = d.readInt()
-    if (w == 0 || h == 0 || n < 0) throw CorruptMaskException("bad header ${w}x$h/$n")
+    // Pages are made at most a few thousand pixels wide; anything larger is a
+    // damaged header (and would overflow or exhaust memory when allocated).
+    if (w == 0 || h == 0 || n < 0 || w > MAX_MASK_WIDTH || h > MAX_MASK_HEIGHT) throw CorruptMaskException("bad header ${w}x$h/$n")
     val payload = ByteArray(n).also { d.readFully(it) }
     Triple(w, h, payload)
 } catch (e: IOException) {

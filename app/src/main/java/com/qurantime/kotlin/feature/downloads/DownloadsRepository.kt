@@ -161,6 +161,8 @@ class DownloadsRepository(
 
     private suspend fun onEvent(e: DownloadEvent) {
         val row = dao.byTaskId(e.taskId) ?: return
+        // A finished row never changes again (WorkManager repeats old states).
+        if (row.status == DownloadStatus.DONE) return
         val part = File(row.path + ".part")
         when (e.status) {
             DownloadStatus.DONE -> {
@@ -175,13 +177,13 @@ class DownloadsRepository(
                 dao.update(row.copy(status = if (ok) DownloadStatus.DONE else DownloadStatus.FAILED, totalBytes = if (ok) file.length() else null))
             }
             DownloadStatus.FAILED -> {
+                if (row.status == DownloadStatus.FAILED) return
                 deleteQuietly(part)
                 dao.update(row.copy(status = DownloadStatus.FAILED))
             }
             else -> {
-                // A finished row never goes back (WorkManager repeats old states).
-                if (row.status == DownloadStatus.DONE) return
-                dao.update(row.copy(status = e.status, receivedBytes = e.received ?: row.receivedBytes, totalBytes = e.total ?: row.totalBytes))
+                val next = row.copy(status = e.status, receivedBytes = e.received ?: row.receivedBytes, totalBytes = e.total ?: row.totalBytes)
+                if (next != row) dao.update(next)
             }
         }
     }

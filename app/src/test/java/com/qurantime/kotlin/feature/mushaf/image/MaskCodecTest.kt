@@ -81,4 +81,22 @@ class MaskCodecTest {
         assertTrue("mostly paper: $inked", inked < m.alpha.size / 2)
         assertTrue(m.alpha.all { val v = it.toInt() and 0xFF; v == quantise(v) })
     }
+
+    // Review (Focus 1): a damaged header must not make the app allocate
+    // gigabytes or crash; it is a corrupt file like any other.
+    @Test
+    fun `absurd dimensions are rejected before allocating`() {
+        val bytes = java.io.ByteArrayOutputStream().also { o ->
+            java.io.DataOutputStream(o).apply {
+                write("QTM1".toByteArray())
+                writeShort(65535)
+                writeShort(65535)
+                writeInt(10)
+                write(ByteArray(10))
+            }
+        }.toByteArray()
+        org.junit.Assert.assertThrows(CorruptMaskException::class.java) {
+            RawDeflateMaskCodec.decodeMask(bytes.inputStream())
+        }
+    }
 }

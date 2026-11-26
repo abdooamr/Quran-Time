@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older. Bookmarks, settings and favourites are backed up;
+     Mushaf pages and downloaded recitations (~80 MB+, re-downloadable) are not,
+     or the app would pass Auto Backup's 25 MB limit and nothing would be saved. -->
+<full-backup-content>
+    <exclude domain="file" path="mushaf/" />
+    <exclude domain="file" path="audio/" />
+</full-backup-content>

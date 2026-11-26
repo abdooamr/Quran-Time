@@ -56,6 +56,7 @@ import com.qurantime.kotlin.LocalAppContainer
 import com.qurantime.kotlin.R
 import com.qurantime.kotlin.core.l10n.localDigits
 import com.qurantime.kotlin.core.theme.LocalMushafPalette
+import com.qurantime.kotlin.feature.mushaf.image.CorruptMaskException
 import com.qurantime.kotlin.feature.mushaf.image.PageUnavailableException
 import com.qurantime.kotlin.feature.mushaf.image.SvgRasterizer
 import com.qurantime.kotlin.feature.mushaf.image.renderWidthBucket
@@ -73,6 +74,22 @@ import kotlinx.coroutines.withContext
 /** The ink colour a page is drawn in (for tests and accessibility tools). */
 val PageInk = SemanticsPropertyKey<Color>("PageInk")
 private var SemanticsPropertyReceiver.pageInk by PageInk
+
+/** Height the mini player or offline banner may take or give back without a page being made again. */
+private val MINI_PLAYER_ALLOWANCE = 160.dp
+
+/**
+ * The width a page's image is made at: the width it is shown at, as if the
+ * height were [allowancePx] larger. So the mini player or a banner coming and
+ * going doesn't make every page convert again (drawing scales it down a
+ * little), while landscape, where the page is fitted by height, doesn't make
+ * images many times larger than shown.
+ */
+fun renderWidthPx(maxWidthPx: Int, maxHeightPx: Int, framePx: Int, folioPx: Int, allowancePx: Int, box: androidx.compose.ui.geometry.Size): Int {
+    val byWidth = maxWidthPx - framePx
+    val byHeight = ((maxHeightPx + allowancePx - framePx - folioPx) * box.width / box.height).toInt()
+    return min(byWidth, byHeight).coerceAtLeast(1)
+}
 
 /** A page decoded at start-up (any width) shows at once; the exact width replaces it when ready. */
 private fun initialLoad(container: com.qurantime.kotlin.AppContainer, page: Int): PageLoad =
@@ -108,10 +125,9 @@ fun MushafPageView(
         val fittedH = (box.height * scaleDp).dp
         val density = LocalDensity.current
         val shownPx = with(density) { fittedW.roundToPx() }.coerceAtLeast(1)
-        // The image is made for the full available width, not the height-fitted
-        // width: the mini player or a banner changing the height then doesn't
-        // make every page convert again. Drawing scales it down slightly.
-        val renderPx = with(density) { (maxWidth - frame).roundToPx() }.coerceAtLeast(shownPx)
+        val renderPx = with(density) {
+            renderWidthPx(maxWidth.roundToPx(), maxHeight.roundToPx(), frame.roundToPx(), folio.roundToPx(), MINI_PLAYER_ALLOWANCE.roundToPx(), box)
+        }.coerceAtLeast(shownPx)
         if (page > 2) SideEffect { container.mushaf.pageWidthPx = renderPx }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -216,12 +232,19 @@ private suspend fun CoroutineScope.loadPage(
     // Neighbouring pages wait until the opening page is on screen, so it gets the CPU first.
     if (page != container.mushaf.currentPage.value) container.mushaf.firstPageDrawn.first { it }
     return try {
-        val r = container.pages.mask(page, widthPx)
-        val bmp = withContext(Dispatchers.Default) {
-            r.file.inputStream().buffered().use { container.maskCodec.decode(it) }.also {
+        suspend fun decode(f: java.io.File) = withContext(Dispatchers.Default) {
+            f.inputStream().buffered().use { container.maskCodec.decode(it) }.also {
                 // Upload to the GPU now, on the render thread, not in the first frame that shows it.
                 it.prepareToDraw()
             }
+        }
+        var r = container.pages.mask(page, widthPx)
+        val bmp = try {
+            decode(r.file)
+        } catch (_: CorruptMaskException) {
+            // Damaged on disk (right length, bad data): make it again from the SVG.
+            r = container.pages.remake(page, widthPx)
+            decode(r.file)
         }
         container.pageBitmaps.put(page, r.bucket, bmp)
         if (!r.exact && container.online.online.value) {

@@ -105,6 +105,21 @@ class DownloadsUiTest {
         rule.onNodeWithText("Download all pages (about 80 MB)").performClick()
         rule.await { rule.onAllNodesWithText(" / 604", substring = true).fetchSemanticsNodes().isNotEmpty() }
     }
+
+    // Review I6: a running pack (it may be on mobile data) can be stopped.
+    @Test
+    fun `a running page pack can be cancelled`() {
+        val c = TestContainer()
+        c.pageFetcher.hang = true
+        rule.launchApp(c)
+        rule.onNodeWithText("More").performClick()
+        rule.onNodeWithText("Downloads").performClick()
+        rule.await { rule.onAllNodesWithText("Download all pages (about 80 MB)").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithText("Download all pages (about 80 MB)").performClick()
+        rule.await { rule.onAllNodesWithText(" / 604", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithText("Cancel").performClick()
+        rule.await { rule.onAllNodesWithText("Download all pages (about 80 MB)").fetchSemanticsNodes().isNotEmpty() }
+    }
 }
 
 /** The page pack's failure handling (Review Focus 3) and cancellation. */

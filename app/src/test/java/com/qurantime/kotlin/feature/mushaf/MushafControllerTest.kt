@@ -87,4 +87,18 @@ class PageBitmapCacheTest {
         cache.clear()
         assertNull(cache.get(3, 1080))
     }
+
+    // Review I4: render at the width the page is shown at (plus room for the
+    // mini player), not the full screen width.
+    @Test
+    fun `pages render at their shown width, with room for the mini player`() {
+        val box = com.qurantime.kotlin.feature.mushaf.viewBoxForPage(3) // 345 x 550
+        // Portrait A50 (1080 x ~1700 available): limited by width, as before.
+        assertEquals(1080 - 40, com.qurantime.kotlin.feature.mushaf.ui.renderWidthPx(1080, 1700, framePx = 40, folioPx = 140, allowancePx = 400, box = box))
+        // Landscape (2340 x 700): limited by height; far below the full width.
+        val landscape = com.qurantime.kotlin.feature.mushaf.ui.renderWidthPx(2340, 700, framePx = 40, folioPx = 140, allowancePx = 400, box = box)
+        assertEquals(((700 + 400 - 40 - 140) * 345f / 550f).toInt(), landscape)
+        // The mini player appearing (less height) doesn't change the portrait size.
+        assertEquals(1080 - 40, com.qurantime.kotlin.feature.mushaf.ui.renderWidthPx(1080, 1700 - 200, framePx = 40, folioPx = 140, allowancePx = 400, box = box))
+    }
 }

@@ -214,6 +214,52 @@ class DownloadsRepositoryTest {
     }
 }
 
+/** Review I5: WorkManager re-reports every job on every change. */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(AndroidJUnit4::class)
+class DownloadEventFloodTest {
+    @get:Rule val tmp = TemporaryFolder()
+    private val m = parseReciters(loadFixtureJson("reciters_231_eng.json")).single().moshaf.first()
+
+    @Test
+    fun `repeated events don't rewrite rows`() = runTest {
+        val db = memoryDb()
+        var writes = 0
+        val real = db.downloadsDao()
+        val counting = object : com.qurantime.kotlin.core.db.DownloadsDao by real {
+            override suspend fun update(row: com.qurantime.kotlin.core.db.DownloadEntity) {
+                writes++
+                real.update(row)
+            }
+        }
+        val dl = FakeDownloader()
+        val repo = DownloadsRepository(counting, dl, tmp.root, CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)))
+        repo.enqueueSurah(track(m, 18))
+        val id = dl.tasks.keys.single()
+        dl.emit(DownloadEvent(id, DownloadStatus.RUNNING, received = 10, total = 100))
+        dl.finish(id)
+        repo.settled()
+        val afterDone = writes
+        repeat(5) { dl.emit(DownloadEvent(id, DownloadStatus.DONE)) }
+        repeat(3) { dl.emit(DownloadEvent(id, DownloadStatus.RUNNING, received = 10, total = 100)) }
+        repo.settled()
+        assertEquals(afterDone, writes)
+        assertEquals(DownloadStatus.DONE, repo.all().single().status)
+        db.close()
+    }
+
+    @Test
+    fun `the downloader passes on only what changed`() {
+        val last = mutableMapOf<String, DownloadEvent>()
+        val a = DownloadEvent("a", DownloadStatus.DONE)
+        val b1 = DownloadEvent("b", DownloadStatus.RUNNING, 10, 100)
+        assertEquals(listOf(a, b1), changedEvents(last, listOf(a, b1)))
+        assertEquals(emptyList<DownloadEvent>(), changedEvents(last, listOf(a, b1)))
+        val b2 = b1.copy(received = 60)
+        assertEquals(listOf(b2), changedEvents(last, listOf(a, b2)))
+    }
+}
+
 @RunWith(AndroidJUnit4::class)
 class DownloadWorkerTest {
     @get:Rule val tmp = TemporaryFolder()

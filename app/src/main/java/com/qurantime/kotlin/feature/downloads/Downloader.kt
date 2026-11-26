@@ -73,15 +73,20 @@ class WorkManagerDownloader(private val context: Context) : Downloader {
         wm.getWorkInfoById(UUID.fromString(taskId)).get()?.let(::statusOf)
     }
 
+    // WorkManager re-emits every tagged job (finished ones too) on every
+    // change; only the jobs whose state or progress changed are passed on.
+    private val lastSeen = mutableMapOf<String, DownloadEvent>()
+
     override val events: Flow<DownloadEvent> = wm.getWorkInfosByTagFlow(TAG).flatMapConcat { infos ->
-        infos.map { info ->
+        val all = infos.map { info ->
             DownloadEvent(
                 taskId = info.id.toString(),
                 status = statusOf(info),
                 received = info.progress.getLong(DownloadWorker.KEY_RECEIVED, -1).takeIf { it >= 0 },
                 total = info.progress.getLong(DownloadWorker.KEY_TOTAL, -1).takeIf { it > 0 },
             )
-        }.asFlow()
+        }
+        synchronized(lastSeen) { changedEvents(lastSeen, all) }.asFlow()
     }
 
     private fun statusOf(info: WorkInfo) = when (info.state) {
@@ -96,6 +101,10 @@ class WorkManagerDownloader(private val context: Context) : Downloader {
         const val TAG = "qt-download"
     }
 }
+
+/** The events in [now] that differ from what [last] saw for their task; updates [last]. */
+internal fun changedEvents(last: MutableMap<String, DownloadEvent>, now: List<DownloadEvent>): List<DownloadEvent> =
+    now.filter { e -> last.put(e.taskId, e) != e }
 
 /**
  * Downloads one file to its `.part` path, continuing a partial file with an

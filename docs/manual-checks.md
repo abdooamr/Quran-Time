@@ -43,3 +43,11 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Home screen: the icon is the green star-in-ring; on Android 13+ with themed icons on, it shows as a monochrome star.
 - [ ] Cold start: the splash shows the star on a green disc over ivory (dark: over #121212), then the Mushaf.
 - [ ] Create the upload keystore and `key.properties` yourself (never committed), then `./gradlew :app:bundleRelease` for Play.
+
+## After the final review (fix pass)
+
+- [ ] Theme = System, app open: switch the phone's dark mode. Expected: the app follows at once.
+- [ ] Play a surah → Live → a TV channel → Back → Play in the mini player. Expected: the recitation plays (not silent).
+- [ ] Notification Stop, reopen the app, Play. Expected: it plays.
+- [ ] Read in landscape, swipe a few pages. Expected: pages sharp, memory stays near portrait levels (`dumpsys meminfo`), "saved on this phone" barely grows.
+- [ ] Start "Download all pages", then Cancel. Expected: it stops; pages already saved stay.

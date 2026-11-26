@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.feature.mushaf.image
 
+import androidx.core.graphics.createBitmap
 import android.graphics.Bitmap
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -54,7 +55,7 @@ private fun readFile(input: InputStream): Triple<Int, Int, ByteArray> = try {
 }
 
 private fun alphaBitmap(w: Int, h: Int, alpha: ByteArray): Bitmap {
-    val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
+    val bmp = createBitmap(w, h, Bitmap.Config.ALPHA_8)
     val row = bmp.rowBytes
     val buf = if (row == w) {
         ByteBuffer.wrap(alpha)

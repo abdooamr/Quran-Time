@@ -1,6 +1,6 @@
 package com.qurantime.kotlin.feature.audio
 
-import android.net.Uri
+import androidx.core.net.toUri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -32,7 +32,7 @@ fun PlayableItem.toMediaItem(localPath: String? = null): MediaItem {
         .apply {
             when (val item = this@toMediaItem) {
                 is SurahTrack -> setAlbumTitle(item.moshafName)
-                is AudioClip -> item.artUrl?.let { setArtworkUri(Uri.parse(it)) }
+                is AudioClip -> item.artUrl?.let { setArtworkUri(it.toUri()) }
                 is RadioStream -> {}
             }
         }

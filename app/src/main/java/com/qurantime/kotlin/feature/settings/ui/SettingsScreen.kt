@@ -1,8 +1,8 @@
 package com.qurantime.kotlin.feature.settings.ui
 
+import androidx.core.net.toUri
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -176,7 +176,7 @@ fun AboutScreen() {
             Text(stringResource(R.string.source_credit), style = MaterialTheme.typography.bodyLarge)
             TextButton(onClick = {
                 try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(MP3QURAN)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    context.startActivity(Intent(Intent.ACTION_VIEW, MP3QURAN.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 } catch (_: ActivityNotFoundException) {
                     // No browser: nothing to open.
                 }

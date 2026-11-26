@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.feature.mushaf.image
 
+import androidx.core.graphics.createBitmap
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.compose.ui.geometry.Size
@@ -38,7 +39,7 @@ object SvgRasterizer {
     fun renderBitmap(svg: InputStream, viewBox: Size, widthPx: Int): Bitmap {
         val doc = SVG.getFromInputStream(svg)
         val heightPx = (widthPx * viewBox.height / viewBox.width).roundToInt()
-        val bmp = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ALPHA_8)
+        val bmp = createBitmap(widthPx, heightPx, Bitmap.Config.ALPHA_8)
         doc.renderToCanvas(Canvas(bmp), RenderOptions().viewPort(0f, 0f, widthPx.toFloat(), heightPx.toFloat()))
         return bmp
     }

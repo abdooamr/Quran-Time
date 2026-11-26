@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.core.l10n
 
+import androidx.core.content.edit
 import android.content.Context
 import android.content.res.Configuration
 import java.util.Locale
@@ -19,9 +20,9 @@ object AppLocale {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY, null) ?: "ar"
 
     fun save(context: Context, tag: String?) {
-        context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().apply {
+        context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
             if (tag == null) remove(KEY) else putString(KEY, tag)
-        }.apply()
+        }
     }
 
     /** [base] with the saved language applied (for attachBaseContext). */

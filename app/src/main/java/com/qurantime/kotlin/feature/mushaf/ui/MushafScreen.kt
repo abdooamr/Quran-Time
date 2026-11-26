@@ -96,9 +96,13 @@ fun MushafScreen(
 
     var jumpSuwar by remember { mutableStateOf<List<Surah>?>(null) }
     jumpSuwar?.let { list ->
+        // The page when the sheet opens; collecting it here would recompose the
+        // whole screen on every swipe.
+        @Suppress("StateFlowValueCalledInComposition")
+        val openedOn = container.mushaf.currentPage.value
         JumpSheet(
             suwar = list,
-            currentPage = container.mushaf.currentPage.value,
+            currentPage = openedOn,
             onJump = { container.mushaf.goTo(it) },
             onDismiss = { jumpSuwar = null },
         )
@@ -235,7 +239,10 @@ private fun Header(
 @Composable
 private fun MushafPager(pageContent: @Composable (page: Int) -> Unit) {
     val mushaf = LocalAppContainer.current.mushaf
-    val pager = rememberPagerState(initialPage = mushaf.currentPage.value - 1) { MUSHAF_PAGES }
+    // Only the starting page; after that the pager owns the position.
+    @Suppress("StateFlowValueCalledInComposition")
+    val startPage = mushaf.currentPage.value - 1
+    val pager = rememberPagerState(initialPage = startPage) { MUSHAF_PAGES }
     val ltr = LocalLayoutDirection.current == LayoutDirection.Ltr
     // The page a jump is heading to; reaching it is not the reader swiping away.
     var jumpTarget by remember { mutableStateOf<Int?>(null) }

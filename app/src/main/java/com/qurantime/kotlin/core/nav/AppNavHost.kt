@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.core.nav
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -101,5 +102,5 @@ fun TabPlaceholder(tab: AppTab) = TitledPlaceholder(stringResource(tab.label))
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitledPlaceholder(title: String) {
-    Scaffold(topBar = { TopAppBar(title = { Text(title) }) }) {}
+    Scaffold(topBar = { TopAppBar(title = { Text(title) }) }) { padding -> Box(Modifier.padding(padding)) }
 }

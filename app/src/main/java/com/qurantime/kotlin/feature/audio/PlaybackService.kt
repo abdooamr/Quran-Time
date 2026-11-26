@@ -16,6 +16,8 @@ import com.qurantime.kotlin.R
  * Bluetooth and notification controls. The player belongs to the app; the
  * service only puts a media session on it.
  */
+// Media3 marks the session customisation used here as unstable API.
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
 
@@ -58,6 +60,8 @@ class PlaybackService : MediaSessionService() {
  * the app so it also cancels the sleep timer and any repeat. Radio offers no
  * seeking or skipping.
  */
+// Media3 marks the session customisation used here as unstable API.
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class SessionPlayer(
     player: Player,
     private val queue: QueueHandler,

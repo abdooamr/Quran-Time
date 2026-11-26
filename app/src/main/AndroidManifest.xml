@@ -23,7 +23,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.QuranTime">
         <!-- Lets `adb shell` tools (atrace, Perfetto, Macrobenchmark) profile the release build; no other access. -->
         <profileable android:shell="true" />

@@ -81,6 +81,8 @@ val DefaultVideoPlayerFactory = VideoPlayerFactory { context, url, _ ->
 
 /** Full-screen video for live TV, videos and tadabor clips; in landscape the system bars hide too. */
 @OptIn(ExperimentalMaterial3Api::class)
+// PlayerView's button settings are Media3 unstable API.
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 @Composable
 fun VideoPlayerScreen(url: String, title: String, live: Boolean, onClose: () -> Unit) {
     val c = LocalAppContainer.current

@@ -15,6 +15,11 @@ val keyProps = Properties().apply {
 }
 
 android {
+    bundle {
+        // The app switches between Arabic and English itself (Settings), so every
+        // install needs both: don't let Play split resources by device language.
+        language { enableSplit = false }
+    }
     namespace = "com.qurantime.kotlin"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }

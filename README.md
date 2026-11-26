@@ -39,9 +39,9 @@ builds are signed with the debug key and cannot be uploaded to Play.
 
 | | Kotlin | Flutter version |
 |---|---|---|
-| Cold start to the page drawn | 421 ms | 586 ms |
-| Late frames while swiping pages | 0.89 % | n/a |
-| Memory while reciting | 113 MB | ~120 MB |
+| Cold start to the page drawn | 375 ms | 586 ms |
+| Late frames while swiping pages | 0.00 % (median of 5 runs) | n/a |
+| Memory while reciting | 116 MB | ~120 MB |
 | All 604 pages on the phone | 78.9 MB | ~180 MB |
 | APK | 4.3 MB | 23.6 MB |
 

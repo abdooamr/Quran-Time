@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The splash icon: the launcher icon's star on its green disc (the splash masks it to a circle). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:left="48dp" android:top="48dp" android:right="48dp" android:bottom="48dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/ic_launcher_background" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_launcher_foreground" android:left="64dp" android:top="64dp" android:right="64dp" android:bottom="64dp" />
+</layer-list>

@@ -37,3 +37,9 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Settings → English. Expected: the whole app (including sheets, dialogs and the notification) switches to English, left-to-right, and stays English after closing and reopening.
 - [ ] Settings → each theme. Expected: System / Light / Sepia / Dark apply at once, including the Mushaf page ink.
 - [ ] About → "mp3quran.net". Expected: the browser opens the site.
+
+## Release (Task 34)
+
+- [ ] Home screen: the icon is the green star-in-ring; on Android 13+ with themed icons on, it shows as a monochrome star.
+- [ ] Cold start: the splash shows the star on a green disc over ivory (dark: over #121212), then the Mushaf.
+- [ ] Create the upload keystore and `key.properties` yourself (never committed), then `./gradlew :app:bundleRelease` for Play.

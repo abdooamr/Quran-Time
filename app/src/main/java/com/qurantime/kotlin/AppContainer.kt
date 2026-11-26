@@ -1,5 +1,7 @@
 package com.qurantime.kotlin
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import android.content.ComponentCallbacks2
 import android.content.ComponentName
 import android.content.Context
 import android.net.ConnectivityManager
@@ -90,6 +92,19 @@ open class AppContainer(context: Context) {
     open val maskCodec: MaskCodec = RawDeflateMaskCodec
     open val pages: PageImageStore by lazy { PageImageStore(appContext.filesDir, OkHttpPageFetcher(http), maskCodec) }
     val pageBitmaps by lazy { PageBitmapCache() }
+
+    /**
+     * Counts the times Android asked for memory back while the app was hidden.
+     * Pages on screen and the zoom render watch it: they let their bitmaps go
+     * and draw again from disk when the app is visible.
+     */
+    val memoryTrims = MutableStateFlow(0)
+
+    fun onTrimMemory(level: Int) {
+        if (level < ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) return
+        pageBitmaps.clear()
+        memoryTrims.value++
+    }
 
     /** Built after settings are loaded (it starts at the saved last page). */
     val mushaf by lazy {

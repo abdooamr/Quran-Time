@@ -19,6 +19,7 @@ import com.qurantime.kotlin.feature.reciters.parseReciters
 import com.qurantime.kotlin.feature.timing.TimedReadMatcher
 import com.qurantime.kotlin.feature.timing.parseAyahTimings
 import com.qurantime.kotlin.feature.timing.parseTimedReads
+import com.qurantime.kotlin.support.await
 import com.qurantime.kotlin.support.TestContainer
 import com.qurantime.kotlin.support.awaitTag
 import com.qurantime.kotlin.support.launchApp
@@ -49,7 +50,7 @@ class FollowAlongUiTest {
         runBlocking { c.settings.setAutoFollow(autoFollow) }
         rule.launchApp(c, lastPage = page)
         runBlocking { c.playerController.playItems(listOf(baqarah())) }
-        rule.waitUntil(5_000) { c.follow.state.value.active }
+        rule.await { c.follow.state.value.active }
         return c
     }
 
@@ -178,7 +179,7 @@ class AyahActionsTest {
         rule.onNodeWithText("Repeat this ayah").performClick()
         awaitText("Repeat ayahs")
         rule.onNodeWithText("Start repeating").performClick()
-        rule.waitUntil(5_000) { c.playerController.state.value.repeating }
+        rule.await { c.playerController.state.value.repeating }
         assertEquals(65_566L, c.backend.positionMs)
         c.playerController.cancelRepeat()
     }

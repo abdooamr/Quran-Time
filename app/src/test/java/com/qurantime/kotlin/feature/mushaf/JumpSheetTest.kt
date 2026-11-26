@@ -129,6 +129,21 @@ class ZoomStateTest {
         assertEquals(1, renders)
     }
 
+    // Review I3 / Focus 5: memory pressure drops the zoom render.
+    @Test
+    fun `memory pressure drops the hi-res render`() = runTest {
+        val z = ZoomState(backgroundScope) {
+            android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888).asImageBitmap()
+        }
+        z.onTransform(zoomChange = 2f, pan = Offset.Zero)
+        advanceTimeBy(200)
+        runCurrent()
+        assertNotNull(z.hiRes)
+        z.dropHiRes()
+        assertNull(z.hiRes)
+        assertEquals(2f, z.scale)
+    }
+
     @Test
     fun `offline without svg keeps scaled mask`() = runTest {
         val z = ZoomState(backgroundScope) { null }

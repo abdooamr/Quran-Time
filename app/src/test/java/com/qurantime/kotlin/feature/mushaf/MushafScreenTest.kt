@@ -17,10 +17,12 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.qurantime.kotlin.core.theme.AppThemeMode
+import com.qurantime.kotlin.support.await
 import com.qurantime.kotlin.support.awaitTag
 import com.qurantime.kotlin.support.fixtureHandler
 import com.qurantime.kotlin.support.launchApp
 import com.qurantime.kotlin.support.TestContainer
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -114,4 +116,18 @@ class MushafScreenTest {
 
     private fun headerRetry() =
         rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Retry")).fetchSemanticsNodes().isNotEmpty()
+
+    // Review I3 / Focus 5: pages on screen give their bitmaps back under
+    // memory pressure and are drawn again from disk.
+    @Test
+    fun `memory pressure releases shown pages and redraws them from disk`() {
+        val c = rule.launchApp(lastPage = 50)
+        rule.awaitTag("mushaf-page-art-50")
+        rule.await { c.pageBitmaps.get(50, com.qurantime.kotlin.feature.mushaf.image.renderWidthBucket(c.mushaf.pageWidthPx)) != null || c.pageBitmaps.anyFor(50) != null }
+        val before = com.qurantime.kotlin.support.LegacyFriendlyCodec.decodes.get()
+        c.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN)
+        assertNull(c.pageBitmaps.anyFor(50))
+        rule.await { com.qurantime.kotlin.support.LegacyFriendlyCodec.decodes.get() > before }
+        rule.awaitTag("mushaf-page-art-50")
+    }
 }

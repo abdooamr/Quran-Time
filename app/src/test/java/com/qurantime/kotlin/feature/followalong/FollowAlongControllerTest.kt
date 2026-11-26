@@ -66,7 +66,7 @@ class FollowAlongControllerTest {
         val scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
         val s = settings(readId = readId)
         val player = PlayerController(QueueHandler(backend, { null }, scope), s, requestNotificationPermission = {}, scope = scope)
-        val follow = FollowAlongController(player, TimingRepository(api, CachedFetcher(MemoryApiCacheDao())), matcher = { matcher }, suwar = { suwar }, settings = s, scope = scope)
+        val follow = FollowAlongController(player, TimingRepository(api, CachedFetcher(MemoryApiCacheDao(), parseContext = scope.coroutineContext)), matcher = { matcher }, suwar = { suwar }, settings = s, scope = scope)
         var count = 0
         scope.launch { follow.state.collect { count++ } }
         return Setup(player, follow) { count }

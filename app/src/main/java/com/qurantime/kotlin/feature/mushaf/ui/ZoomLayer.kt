@@ -34,6 +34,12 @@ class ZoomState(private val scope: CoroutineScope, private val loadHiRes: suspen
         private set
     private var job: Job? = null
 
+    /** Lets the hi-res render go (memory pressure); the scaled mask shows until the next zoom gesture. */
+    fun dropHiRes() {
+        job?.cancel()
+        hiRes = null
+    }
+
     fun onTransform(zoomChange: Float, pan: Offset, size: Size = Size.Unspecified) {
         scale = (scale * zoomChange).coerceIn(1f, 4f)
         job?.cancel()

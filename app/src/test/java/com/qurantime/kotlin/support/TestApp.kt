@@ -43,7 +43,11 @@ val solidRasterize: (InputStream, Size, Int) -> PageMask = { input, viewBox, wid
  * crash Compose on Windows. The real decoder is covered by MaskCodecTest.
  */
 object LegacyFriendlyCodec : MaskCodec by RawDeflateMaskCodec {
+    /** Masks decoded so far (all tests; compare before and after). */
+    val decodes = java.util.concurrent.atomic.AtomicInteger()
+
     override fun decode(input: InputStream): Bitmap {
+        decodes.incrementAndGet()
         val m = RawDeflateMaskCodec.decodeMask(input)
         return Bitmap.createBitmap(m.width, m.height, Bitmap.Config.ARGB_8888)
     }

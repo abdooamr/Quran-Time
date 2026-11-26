@@ -81,6 +81,39 @@ class Media3BackendTest {
         assertEquals(Processing.COMPLETED, backend.state.value.processing)
         p.release()
     }
+    // Review C1: ExoPlayer is idle after stop() or an error and plays nothing
+    // until prepare(); Flutter's player reloaded the source on play.
+    private fun preparedPlayer(): Pair<androidx.media3.exoplayer.ExoPlayer, Media3Backend> {
+        val p = androidx.media3.test.utils.TestExoPlayerBuilder(context).build()
+        p.setMediaSources(listOf(FakeMediaSource(), FakeMediaSource()))
+        p.prepare()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_READY)
+        return p to Media3Backend(p, scope)
+    }
+
+    @Test
+    fun `play after stop prepares again and plays`() {
+        val (p, backend) = preparedPlayer()
+        backend.stop()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_IDLE)
+        backend.play()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_READY)
+        assertTrue(p.isPlaying)
+        p.release()
+    }
+
+    @Test
+    fun `seeking to the next item after an error prepares again`() {
+        val (p, backend) = preparedPlayer()
+        backend.stop() // the player is idle, as after a PlaybackException
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_IDLE)
+        backend.seek(0, index = 1)
+        backend.play()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_READY)
+        assertEquals(1, p.currentMediaItemIndex)
+        assertTrue(p.isPlaying)
+        p.release()
+    }
 }
 
 /** Ports of the MediaItem cases of the Flutter playable_item_test.dart. */

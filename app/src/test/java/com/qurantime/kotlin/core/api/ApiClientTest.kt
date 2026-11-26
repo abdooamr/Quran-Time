@@ -1,5 +1,8 @@
 package com.qurantime.kotlin.core.api
 
+import okio.buffer
+import okhttp3.ResponseBody.Companion.asResponseBody
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -93,5 +96,28 @@ class ApiClientTest {
     fun `invalid json throws ApiException`() = runTest {
         always(200, "<html>")
         expectApiException(200) { client().getJson("suwar") }
+    }
+
+    // Review I1: callers are often on the main thread; reading the body and
+    // parsing it must not happen there.
+    @Test
+    fun `reads and parses off the caller's thread`() {
+        server.enqueue(MockResponse().setBody("""{"suwar":[]}"""))
+        var readOn: String? = null
+        val ok = OkHttpClient.Builder().addNetworkInterceptor { chain ->
+            val res = chain.proceed(chain.request())
+            val body = res.body
+            val src = object : okio.ForwardingSource(body.source()) {
+                override fun read(sink: okio.Buffer, byteCount: Long): Long {
+                    readOn = Thread.currentThread().name
+                    return super.read(sink, byteCount)
+                }
+            }
+            res.newBuilder().body(src.buffer().asResponseBody(body.contentType(), body.contentLength())).build()
+        }.build()
+        val caller = java.util.concurrent.Executors.newSingleThreadExecutor { Thread(it, "caller") }.asCoroutineDispatcher()
+        kotlinx.coroutines.runBlocking(caller) { ApiClient(ok, server.url("/api/v3/")).getJson("suwar") }
+        caller.close()
+        assertTrue("body read on $readOn", readOn != null && !readOn!!.startsWith("caller"))
     }
 }

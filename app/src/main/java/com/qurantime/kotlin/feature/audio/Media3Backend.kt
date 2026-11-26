@@ -108,12 +108,25 @@ class Media3Backend(private val player: Player, private val scope: CoroutineScop
         }
     }
 
-    override fun play() = player.play()
+    /**
+     * After stop() or a playback error the player is idle and plays nothing
+     * until it is prepared again (its items are kept).
+     */
+    private fun prepareIfIdle() {
+        if (player.playbackState == Player.STATE_IDLE && player.mediaItemCount > 0) player.prepare()
+    }
+
+    override fun play() {
+        prepareIfIdle()
+        player.play()
+    }
+
     override fun pause() = player.pause()
     override fun stop() = player.stop()
 
     override fun seek(positionMs: Long, index: Int?) {
         if (index == null) player.seekTo(positionMs) else player.seekTo(index, positionMs)
+        prepareIfIdle()
     }
 
     override fun setSpeed(speed: Float) = player.setPlaybackSpeed(speed)

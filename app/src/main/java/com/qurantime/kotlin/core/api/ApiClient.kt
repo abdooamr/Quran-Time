@@ -4,7 +4,9 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -54,31 +56,16 @@ class ApiClient(
         }.build()
         var attempt = 0
         while (true) {
-            val outcome = try {
-                client.newCall(Request.Builder().url(url).build()).await().use { res ->
-                    val body = res.body.string()
-                    if (res.isSuccessful) {
-                        try {
-                            val parsed = json.parseToJsonElement(body)
-                            // The API only answers with objects or arrays; anything
-                            // else (an HTML page read as a bare literal) is an error.
-                            if (parsed !is JsonObject && parsed !is JsonArray) {
-                                throw ApiException(res.code, "Invalid JSON from $path")
-                            }
-                            return parsed
-                        } catch (e: SerializationException) {
-                            throw ApiException(res.code, "Invalid JSON from $path: ${e.message}")
-                        } catch (e: IllegalArgumentException) {
-                            throw ApiException(res.code, "Invalid JSON from $path: ${e.message}")
-                        }
-                    }
-                    Failure(res.code, res.message.ifEmpty { "HTTP ${res.code}" }, retryable = res.code >= 500)
-                }
+            val outcome: Any = try {
+                // Reading the body and parsing it block; callers are often on Main.
+                withContext(Dispatchers.IO) { fetchOnce(url, path) }
             } catch (e: InterruptedIOException) {
                 Failure(null, e.message ?: "timeout", retryable = true)
             } catch (e: IOException) {
                 Failure(null, e.message ?: e.javaClass.simpleName, retryable = false)
             }
+            if (outcome is JsonElement) return outcome
+            outcome as Failure
             if (outcome.retryable && attempt < retryDelays.size) {
                 delay(retryDelays[attempt++])
                 continue
@@ -86,6 +73,24 @@ class ApiClient(
             throw ApiException(outcome.status, outcome.message)
         }
     }
+
+    /** One request: the parsed JSON, or a [Failure] to retry or report. */
+    private suspend fun fetchOnce(url: HttpUrl, path: String): Any =
+        client.newCall(Request.Builder().url(url).build()).await().use { res ->
+            val body = res.body.string()
+            if (!res.isSuccessful) return Failure(res.code, res.message.ifEmpty { "HTTP ${res.code}" }, retryable = res.code >= 500)
+            val parsed = try {
+                json.parseToJsonElement(body)
+            } catch (e: SerializationException) {
+                throw ApiException(res.code, "Invalid JSON from $path: ${e.message}")
+            } catch (e: IllegalArgumentException) {
+                throw ApiException(res.code, "Invalid JSON from $path: ${e.message}")
+            }
+            // The API only answers with objects or arrays; anything else (an
+            // HTML page read as a bare literal) is an error.
+            if (parsed !is JsonObject && parsed !is JsonArray) throw ApiException(res.code, "Invalid JSON from $path")
+            parsed
+        }
 
     private class Failure(val status: Int?, val message: String, val retryable: Boolean)
 }

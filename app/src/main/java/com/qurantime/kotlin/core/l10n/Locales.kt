@@ -24,7 +24,10 @@ import java.util.Locale
 fun LocalizedContent(tag: String, content: @Composable () -> Unit) {
     val base = LocalContext.current
     val locale = remember(tag) { Locale.forLanguageTag(tag) }
-    val localized = remember(base, tag) { LocalizedContext(base, locale) }
+    // Keyed on the live configuration: the activity handles uiMode and
+    // orientation changes itself, so dark mode and rotation must come through.
+    val system = LocalConfiguration.current
+    val localized = remember(base, system, tag) { LocalizedContext(base, system, locale) }
     val rtl = TextUtils.getLayoutDirectionFromLocale(locale) == View.LAYOUT_DIRECTION_RTL
     CompositionLocalProvider(
         LocalContext provides localized,
@@ -35,9 +38,9 @@ fun LocalizedContent(tag: String, content: @Composable () -> Unit) {
 }
 
 /** Keeps the activity chain (for result launchers) but swaps the resources. */
-private class LocalizedContext(base: Context, locale: Locale) : ContextWrapper(base) {
+private class LocalizedContext(base: Context, system: Configuration, locale: Locale) : ContextWrapper(base) {
     private val res: Resources = base.createConfigurationContext(
-        Configuration(base.resources.configuration).apply {
+        Configuration(system).apply {
             setLocale(locale)
             setLayoutDirection(locale)
         },

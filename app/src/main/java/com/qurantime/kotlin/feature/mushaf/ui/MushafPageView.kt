@@ -1,5 +1,9 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -134,34 +138,18 @@ private fun BoxScope.PageArt(
 ) {
     val container = LocalAppContainer.current
     var attempt by remember { mutableIntStateOf(0) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val load by produceState(initialLoad(container, page), page, widthPx, attempt) {
-        val bucket = renderWidthBucket(widthPx)
-        container.pageBitmaps.get(page, bucket)?.let {
-            value = PageLoad.Ready(it.asImageBitmap())
-            return@produceState
-        }
-        // Neighbouring pages wait until the opening page is on screen, so it gets the CPU first.
-        if (page != container.mushaf.currentPage.value) container.mushaf.firstPageDrawn.first { it }
-        value = try {
-            val r = container.pages.mask(page, widthPx)
-            val bmp = withContext(Dispatchers.Default) {
-                r.file.inputStream().buffered().use { container.maskCodec.decode(it) }.also {
-                    // Upload to the GPU now, on the render thread, not in the first frame that shows it.
-                    it.prepareToDraw()
-                }
-            }
-            container.pageBitmaps.put(page, r.bucket, bmp)
-            if (!r.exact && container.online.online.value) {
-                // Made for another screen size: show it scaled now, re-make it for this one.
-                launch {
-                    runCatching { container.pages.remake(page, widthPx) }.onSuccess { attempt++ }
-                }
-            }
-            PageLoad.Ready(bmp.asImageBitmap())
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            PageLoad.Offline
+        while (true) {
+            val trims = container.memoryTrims.value
+            val loaded = loadPage(container, page, widthPx, onRemade = { attempt++ })
+            value = loaded
+            if (loaded !is PageLoad.Ready) return@produceState
+            // Memory pressure while hidden: let the bitmap go, and draw the page
+            // again from disk once the app is visible.
+            container.memoryTrims.first { it != trims }
+            value = PageLoad.Loading
+            lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.STARTED) }
         }
     }
     when (val l = load) {
@@ -194,6 +182,7 @@ private fun BoxScope.PageArt(
             ) {
                 val image = zoom.hiRes ?: l.image
                 LaunchedEffect(Unit) { container.mushaf.onPageDrawn(page) }
+                LaunchedEffect(zoom) { container.memoryTrims.drop(1).collect { zoom.dropHiRes() } }
                 Canvas(
                     Modifier
                         .fillMaxSize()
@@ -212,6 +201,40 @@ private fun BoxScope.PageArt(
                 overlays(scale)
             }
         }
+    }
+}
+
+/** The page's mask as a bitmap: from the cache, or made/decoded from disk. */
+private suspend fun CoroutineScope.loadPage(
+    container: com.qurantime.kotlin.AppContainer,
+    page: Int,
+    widthPx: Int,
+    onRemade: () -> Unit,
+): PageLoad {
+    val bucket = renderWidthBucket(widthPx)
+    container.pageBitmaps.get(page, bucket)?.let { return PageLoad.Ready(it.asImageBitmap()) }
+    // Neighbouring pages wait until the opening page is on screen, so it gets the CPU first.
+    if (page != container.mushaf.currentPage.value) container.mushaf.firstPageDrawn.first { it }
+    return try {
+        val r = container.pages.mask(page, widthPx)
+        val bmp = withContext(Dispatchers.Default) {
+            r.file.inputStream().buffered().use { container.maskCodec.decode(it) }.also {
+                // Upload to the GPU now, on the render thread, not in the first frame that shows it.
+                it.prepareToDraw()
+            }
+        }
+        container.pageBitmaps.put(page, r.bucket, bmp)
+        if (!r.exact && container.online.online.value) {
+            // Made for another screen size: show it scaled now, re-make it for this one.
+            launch {
+                runCatching { container.pages.remake(page, widthPx) }.onSuccess { onRemade() }
+            }
+        }
+        PageLoad.Ready(bmp.asImageBitmap())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        PageLoad.Offline
     }
 }
 

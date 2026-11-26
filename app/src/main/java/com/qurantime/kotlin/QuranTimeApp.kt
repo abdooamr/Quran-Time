@@ -1,7 +1,6 @@
 package com.qurantime.kotlin
 
 import android.app.Application
-import android.content.ComponentCallbacks2
 import androidx.work.Configuration
 
 /**
@@ -19,8 +18,6 @@ class QuranTimeApp : Application(), Configuration.Provider {
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         // Decoded pages come back from disk in a few ms; give the memory back.
-        if (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN && containerLazy.isInitialized()) {
-            container.pageBitmaps.clear()
-        }
+        if (containerLazy.isInitialized()) container.onTrimMemory(level)
     }
 }

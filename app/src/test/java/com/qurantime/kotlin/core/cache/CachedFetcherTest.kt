@@ -1,5 +1,7 @@
 package com.qurantime.kotlin.core.cache
 
+import org.junit.Assert.assertTrue
+import kotlinx.coroutines.asCoroutineDispatcher
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -119,5 +121,20 @@ class CachedFetcherTest {
         assertEquals(30.days, Ttl.CATALOG)
         assertEquals(7.days, Ttl.WEEKLY)
         assertEquals(1.days, Ttl.DAILY)
+    }
+
+    // Review I1: parsing (large reciter/timing JSON) must not run on the caller's (main) thread.
+    @Test
+    fun `parses off the caller's thread, from the network and from the cache`() {
+        val threads = mutableListOf<String>()
+        val caller = java.util.concurrent.Executors.newSingleThreadExecutor { Thread(it, "caller") }.asCoroutineDispatcher()
+        kotlinx.coroutines.runBlocking(caller) {
+            repeat(2) { // a miss (network), then a fresh hit (cache)
+                fetcher.fetch("t", 1.days, remote = { v(1) }, parse = { threads += Thread.currentThread().name; it })
+            }
+        }
+        caller.close()
+        assertEquals(2, threads.size)
+        assertTrue("parsed on $threads", threads.none { it.startsWith("caller") })
     }
 }

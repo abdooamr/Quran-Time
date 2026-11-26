@@ -23,7 +23,12 @@ import com.qurantime.kotlin.feature.audio.PlayerController
 import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
+import coil3.ImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.qurantime.kotlin.feature.downloads.Downloader
+import okio.Path.Companion.toOkioPath
 import com.qurantime.kotlin.feature.video.DefaultVideoPlayerFactory
 import com.qurantime.kotlin.feature.video.VideoPlayerFactory
 import com.qurantime.kotlin.feature.downloads.PagePack
@@ -106,6 +111,18 @@ open class AppContainer(context: Context) {
 
     open val downloader: Downloader by lazy { WorkManagerDownloader(appContext) }
     open val videoPlayers: VideoPlayerFactory = DefaultVideoPlayerFactory
+
+    /**
+     * Thumbnails: a small memory cache (the Mushaf pages need the memory) and
+     * a disk cache, fetched with the app's OkHttp client.
+     */
+    open val images: ImageLoader by lazy {
+        ImageLoader.Builder(appContext)
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { http })) }
+            .memoryCache { MemoryCache.Builder().maxSizeBytes(16L * 1024 * 1024).build() }
+            .diskCache { DiskCache.Builder().directory(appContext.cacheDir.resolve("images").toOkioPath()).maxSizeBytes(64L * 1024 * 1024).build() }
+            .build()
+    }
     val downloads by lazy { DownloadsRepository(db.downloadsDao(), downloader, appContext.filesDir, appScope) }
     open val pagePack: PagePack by lazy { WorkManagerPagePack(appContext) }
 

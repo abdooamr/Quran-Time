@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.navigation.compose.composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.qurantime.kotlin.core.nav.AboutRoute
 import com.qurantime.kotlin.core.nav.AppNavHost
@@ -32,6 +33,17 @@ import com.qurantime.kotlin.core.nav.RecentRoute
 import com.qurantime.kotlin.core.nav.ReciterRoute
 import com.qurantime.kotlin.core.nav.SettingsRoute
 import com.qurantime.kotlin.core.nav.TafsirSurahRoute
+import com.qurantime.kotlin.core.nav.TadaborListRoute
+import com.qurantime.kotlin.core.nav.TadaborRoute
+import com.qurantime.kotlin.core.nav.TafsirListRoute
+import com.qurantime.kotlin.core.nav.TafsirRoute
+import com.qurantime.kotlin.core.nav.VideosRoute
+import com.qurantime.kotlin.feature.explore.ui.ExploreScreen
+import com.qurantime.kotlin.feature.explore.ui.SurahPickerScreen
+import com.qurantime.kotlin.feature.explore.ui.TadaborScreen
+import com.qurantime.kotlin.feature.explore.ui.TafsirClipsScreen
+import com.qurantime.kotlin.feature.explore.ui.TafsirCollectionsScreen
+import com.qurantime.kotlin.feature.explore.ui.VideosScreen
 import com.qurantime.kotlin.core.nav.TabPlaceholder
 import com.qurantime.kotlin.core.nav.TitledPlaceholder
 import com.qurantime.kotlin.core.nav.tab
@@ -68,13 +80,12 @@ val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("no AppCo
 /** The whole app: settings-driven language and theme, the tab shell and every screen. */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun QuranTimeRoot(container: AppContainer) {
+fun QuranTimeRoot(container: AppContainer, nav: NavHostController = rememberNavController()) {
     val snackbar = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
     CompositionLocalProvider(LocalAppContainer provides container, com.qurantime.kotlin.core.ui.LocalSnackbar provides snackbar) {
         // Test tags double as resource ids, so benchmarks can find the pager.
         Box(Modifier.semantics { testTagsAsResourceId = true }) {
           SettingsDrivenApp(container.settings) {
-            val nav = rememberNavController()
             AppNavHost(
                 nav,
                 online = container.online,
@@ -110,8 +121,19 @@ fun QuranTimeRoot(container: AppContainer) {
                     }
                 }
                 tab<LiveTab, LiveRoute>(LiveRoute, { LiveScreen() })
-                tab<ExploreTab, ExploreRoute>(ExploreRoute, { TabPlaceholder(AppTab.EXPLORE) }) {
-                    composable<TafsirSurahRoute> { TitledPlaceholder(stringResource(R.string.tab_explore)) }
+                tab<ExploreTab, ExploreRoute>(ExploreRoute, { ExploreScreen() }) {
+                    composable<VideosRoute> { VideosScreen() }
+                    composable<TafsirListRoute> { TafsirCollectionsScreen() }
+                    composable<TafsirRoute> {
+                        val id = it.toRoute<TafsirRoute>().tafsirId
+                        SurahPickerScreen(stringResource(R.string.tafsir)) { s -> nav.navigate(TafsirSurahRoute(id, s)) }
+                    }
+                    composable<TafsirSurahRoute> {
+                        val r = it.toRoute<TafsirSurahRoute>()
+                        TafsirClipsScreen(r.tafsirId, r.surah)
+                    }
+                    composable<TadaborListRoute> { SurahPickerScreen(stringResource(R.string.reflections)) { s -> nav.navigate(TadaborRoute(s)) } }
+                    composable<TadaborRoute> { TadaborScreen(it.toRoute<TadaborRoute>().surah) }
                 }
                 tab<MoreTab, MoreRoute>(MoreRoute, { MoreScreen() }) {
                     composable<BookmarksRoute> { BookmarksScreen() }

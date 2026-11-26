@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.support
 
+import coil3.serviceLoaderEnabled
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Size
@@ -76,6 +77,8 @@ class TestContainer(
     override val pages = PageImageStore(root, pageFetcher, maskCodec, rasterize = solidRasterize)
     override val pagePack by lazy { com.qurantime.kotlin.feature.downloads.InProcessPagePack(pages, geometry, mainScope) }
     override val videoPlayers: com.qurantime.kotlin.feature.video.VideoPlayerFactory = FakeVideoPlayerFactory()
+    /** No network fetcher: thumbnails fail quietly and show their fallback icon. */
+    override val images: coil3.ImageLoader by lazy { coil3.ImageLoader.Builder(appContext).serviceLoaderEnabled(false).build() }
     val fakeDownloader = FakeDownloader()
     override val downloader get() = fakeDownloader
     val backend = FakePlayerBackend()
@@ -102,6 +105,7 @@ fun ComposeContentTestRule.launchApp(
     locale: String = "en",
     theme: AppThemeMode = AppThemeMode.LIGHT,
     lastPage: Int? = null,
+    onNav: (androidx.navigation.NavHostController) -> Unit = {},
 ): TestContainer {
     runBlocking {
         c.settings.setLocale(locale)
@@ -109,7 +113,11 @@ fun ComposeContentTestRule.launchApp(
         lastPage?.let { c.settings.setLastPage(it) }
         c.settings.load()
     }
-    setContent { QuranTimeRoot(c) }
+    setContent {
+        val nav = androidx.navigation.compose.rememberNavController()
+        onNav(nav)
+        QuranTimeRoot(c, nav)
+    }
     waitForIdle()
     return c
 }

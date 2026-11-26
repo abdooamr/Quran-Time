@@ -24,3 +24,10 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Play a radio station, lock the phone. Expected: it keeps playing, with controls in the notification.
 - [ ] Open "Quran channel" and "Sunna channel". Expected: each plays; any recitation stops first; turning the phone sideways fills the screen and hides the system bars; Back returns to the list.
 - [ ] Start a channel, press Home, come back. Expected: the video paused while hidden and goes on when back.
+
+## Explore (Task 32)
+
+- [ ] Explore → Videos: thumbnails load; a type chip narrows the grid; a video plays full screen.
+- [ ] Explore → Tafsir → a collection → a surah → a clip. Expected: it plays in the mini player.
+- [ ] Mushaf → long-press an ayah → "Tafsir of this surah". Expected: that surah's tafsir clips open.
+- [ ] Explore → Reflections → a surah → Play. Expected: video clips open the video player, audio clips play.

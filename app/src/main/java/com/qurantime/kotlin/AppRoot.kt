@@ -44,8 +44,6 @@ import com.qurantime.kotlin.feature.explore.ui.TadaborScreen
 import com.qurantime.kotlin.feature.explore.ui.TafsirClipsScreen
 import com.qurantime.kotlin.feature.explore.ui.TafsirCollectionsScreen
 import com.qurantime.kotlin.feature.explore.ui.VideosScreen
-import com.qurantime.kotlin.core.nav.TabPlaceholder
-import com.qurantime.kotlin.core.nav.TitledPlaceholder
 import com.qurantime.kotlin.core.nav.tab
 import com.qurantime.kotlin.core.settings.SettingsDrivenApp
 import com.qurantime.kotlin.core.nav.PlayerRoute
@@ -72,7 +70,9 @@ import com.qurantime.kotlin.feature.reciters.ui.ReciterScreen
 import com.qurantime.kotlin.feature.reciters.ui.RecitersScreen
 import com.qurantime.kotlin.feature.mushaf.ui.MushafScreen
 import com.qurantime.kotlin.feature.mushaf.ui.PlayPageButton
+import com.qurantime.kotlin.feature.settings.ui.AboutScreen
 import com.qurantime.kotlin.feature.settings.ui.MushafReciterScreen
+import com.qurantime.kotlin.feature.settings.ui.SettingsScreen
 
 /** The app's dependencies, for screens to read. */
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("no AppContainer provided") }
@@ -139,8 +139,8 @@ fun QuranTimeRoot(container: AppContainer, nav: NavHostController = rememberNavC
                     composable<BookmarksRoute> { BookmarksScreen() }
                     composable<DownloadsRoute> { DownloadsScreen() }
                     composable<MushafReciterRoute> { MushafReciterScreen() }
-                    composable<SettingsRoute> { TitledPlaceholder(stringResource(R.string.settings)) }
-                    composable<AboutRoute> { TitledPlaceholder(stringResource(R.string.about)) }
+                    composable<SettingsRoute> { SettingsScreen() }
+                    composable<AboutRoute> { AboutScreen() }
                 }
             }
           }

@@ -31,3 +31,9 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Explore → Tafsir → a collection → a surah → a clip. Expected: it plays in the mini player.
 - [ ] Mushaf → long-press an ayah → "Tafsir of this surah". Expected: that surah's tafsir clips open.
 - [ ] Explore → Reflections → a surah → Play. Expected: video clips open the video player, audio clips play.
+
+## Settings and About (Task 33)
+
+- [ ] Settings → English. Expected: the whole app (including sheets, dialogs and the notification) switches to English, left-to-right, and stays English after closing and reopening.
+- [ ] Settings → each theme. Expected: System / Light / Sepia / Dark apply at once, including the Mushaf page ink.
+- [ ] About → "mp3quran.net". Expected: the browser opens the site.

@@ -74,7 +74,7 @@ fun MiniPlayer(onOpen: () -> Unit) {
                         }
                     }
                 }
-                IconButton(onClick = { scope.launch { player.togglePlay() } }) {
+                IconButton(modifier = Modifier.testTag("mini-play"), onClick = { scope.launch { player.togglePlay() } }) {
                     Icon(
                         if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         contentDescription = stringResource(if (s.playing) R.string.pause else R.string.play),

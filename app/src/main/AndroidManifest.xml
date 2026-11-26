@@ -25,6 +25,8 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.QuranTime">
+        <!-- Lets `adb shell` tools (atrace, Perfetto, Macrobenchmark) profile the release build; no other access. -->
+        <profileable android:shell="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

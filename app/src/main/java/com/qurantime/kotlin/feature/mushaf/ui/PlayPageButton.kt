@@ -1,5 +1,7 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PauseCircleOutline
 import androidx.compose.material.icons.rounded.PlayCircleOutline
@@ -40,7 +42,7 @@ fun PlayPageButton(page: Int, suwar: List<Surah>) {
         }
         return
     }
-    IconButton(onClick = {
+    IconButton(modifier = Modifier.testTag("play-page"), onClick = {
         c.mainScope.launch {
             var surah = surahsOnPage(page, suwar).firstOrNull()?.id
             var ayah = 1

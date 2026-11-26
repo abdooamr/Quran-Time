@@ -1,5 +1,7 @@
 package com.qurantime.kotlin.core.nav
 
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -63,6 +65,7 @@ fun Shell(
                             onClick = { onSelect(tab) },
                             icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
                             label = { Text(stringResource(tab.label)) },
+                            modifier = Modifier.testTag("tab-${tab.name.lowercase()}"),
                         )
                     }
                 }

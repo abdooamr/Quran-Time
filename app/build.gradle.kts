@@ -20,13 +20,13 @@ android {
         // install needs both: don't let Play split resources by device language.
         language { enableSplit = false }
     }
-    namespace = "com.qurantime.kotlin"
+    namespace = "com.qurantime"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }
 
     defaultConfig {
-        applicationId = "com.qurantime.kotlin"
+        applicationId = "com.qurantime"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

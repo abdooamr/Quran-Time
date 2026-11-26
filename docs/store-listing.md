@@ -56,6 +56,6 @@ Pages, recitations and data come from MP3Quran.net.
 - **Ads:** No.
 - **Category:** Books & Reference (or Education).
 - **Content rating:** Everyone.
-- **Package:** `com.qurantime.kotlin` (a new listing; the Flutter app is a different package).
+- **Package:** `com.qurantime` (a new listing; the Flutter app is a different package).
 - **Signing:** create the upload keystore yourself and point `key.properties` at it (see `app/build.gradle.kts`); without it the release build is signed with the debug key and cannot be uploaded.
 - **Privacy policy URL:** host `docs/privacy-policy.md` (for example on GitHub Pages) and paste its link.

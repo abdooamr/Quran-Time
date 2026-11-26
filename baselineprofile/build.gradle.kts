@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.qurantime.kotlin.baselineprofile"
+    namespace = "com.qurantime.baselineprofile"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }

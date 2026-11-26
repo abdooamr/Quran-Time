@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.qurantime.kotlin.benchmark"
+    namespace = "com.qurantime.benchmark"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }

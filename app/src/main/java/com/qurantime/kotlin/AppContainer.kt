@@ -24,6 +24,8 @@ import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
 import com.qurantime.kotlin.feature.downloads.Downloader
+import com.qurantime.kotlin.feature.downloads.PagePack
+import com.qurantime.kotlin.feature.downloads.WorkManagerPagePack
 import com.qurantime.kotlin.feature.downloads.DownloadsRepository
 import com.qurantime.kotlin.feature.downloads.WorkManagerDownloader
 import com.qurantime.kotlin.feature.catalog.CatalogRepository
@@ -102,6 +104,7 @@ open class AppContainer(context: Context) {
 
     open val downloader: Downloader by lazy { WorkManagerDownloader(appContext) }
     val downloads by lazy { DownloadsRepository(db.downloadsDao(), downloader, appContext.filesDir, appScope) }
+    open val pagePack: PagePack by lazy { WorkManagerPagePack(appContext) }
 
     /** Set by the activity: asks for the notification permission (Android 13+), once. */
     var notificationPermission: (suspend () -> Unit)? = null

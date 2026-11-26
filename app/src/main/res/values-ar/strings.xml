@@ -92,7 +92,7 @@
     <string name="saved_recordings">التلاوات المحفوظة</string>
     <string name="mushaf_pages">صفحات المصحف</string>
     <string name="pages_cached">%1$s محفوظة على هذا الهاتف</string>
-    <string name="download_pages">تنزيل كل الصفحات (حوالي ١٨٠ ميغابايت)</string>
+    <string name="download_pages">تنزيل كل الصفحات (حوالي ٨٠ ميغابايت)</string>
     <string name="clear_pages">حذف الصفحات المحفوظة</string>
     <string name="delete_recording_title">حذف تنزيلات هذه التلاوة؟</string>
     <string name="cancel">إلغاء</string>

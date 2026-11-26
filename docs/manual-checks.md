@@ -13,3 +13,8 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 - [ ] Bluetooth: play through a headset or car. Expected: its play/pause and skip buttons work; unplugging or disconnecting pauses.
 - [ ] Notification Stop: Expected: playback stops and the notification goes away; the sleep timer and any repeat are cancelled.
 - [ ] Kill and restore: play, swipe the app away while paused, reopen. Expected: the same surah and position are loaded, paused.
+
+## Downloads (Task 30)
+
+- [ ] Download a surah, then turn on airplane mode. Expected: it plays from the phone.
+- [ ] More → Downloads → "Download all pages", then airplane mode. Expected: every page opens, and tapping an ayah still shows its actions (outlines were saved too).

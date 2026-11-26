@@ -40,7 +40,13 @@ import com.qurantime.kotlin.core.nav.PlayerRoute
 import com.qurantime.kotlin.core.ui.OfflineBanner
 import com.qurantime.kotlin.feature.audio.ui.FullPlayer
 import com.qurantime.kotlin.feature.audio.ui.MiniPlayer
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarkButton
+import com.qurantime.kotlin.feature.downloads.ui.DownloadButton
+import com.qurantime.kotlin.feature.downloads.ui.DownloadsScreen
+import kotlinx.coroutines.launch
 import com.qurantime.kotlin.feature.followalong.ui.RepeatAyahsButton
 import com.qurantime.kotlin.feature.bookmarks.ui.BookmarksScreen
 import com.qurantime.kotlin.feature.more.MoreScreen
@@ -86,7 +92,14 @@ fun QuranTimeRoot(container: AppContainer) {
                     composable<ReciterRoute> { ReciterScreen(it.toRoute<ReciterRoute>().id) }
                     composable<MoshafRoute> {
                         val r = it.toRoute<MoshafRoute>()
-                        MoshafSurahsScreen(r.reciterId, r.moshafId)
+                        val rows by remember { container.downloads.watchAll() }.collectAsStateWithLifecycle(emptyList())
+                        val byUrl = remember(rows) { rows.associateBy { row -> row.url } }
+                        MoshafSurahsScreen(
+                            r.reciterId,
+                            r.moshafId,
+                            onDownloadAll = { rc, m, suwar -> container.mainScope.launch { container.downloads.enqueueMoshaf(rc, m, suwar) } },
+                            trailing = { t -> DownloadButton(t, byUrl[t.url]) },
+                        )
                     }
                 }
                 tab<LiveTab, LiveRoute>(LiveRoute, { TabPlaceholder(AppTab.LIVE) })
@@ -95,7 +108,7 @@ fun QuranTimeRoot(container: AppContainer) {
                 }
                 tab<MoreTab, MoreRoute>(MoreRoute, { MoreScreen() }) {
                     composable<BookmarksRoute> { BookmarksScreen() }
-                    composable<DownloadsRoute> { TitledPlaceholder(stringResource(R.string.downloads)) }
+                    composable<DownloadsRoute> { DownloadsScreen() }
                     composable<MushafReciterRoute> { MushafReciterScreen() }
                     composable<SettingsRoute> { TitledPlaceholder(stringResource(R.string.settings)) }
                     composable<AboutRoute> { TitledPlaceholder(stringResource(R.string.about)) }

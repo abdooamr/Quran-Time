@@ -92,7 +92,7 @@
     <string name="saved_recordings">Saved recordings</string>
     <string name="mushaf_pages">Mushaf pages</string>
     <string name="pages_cached">%1$s saved on this phone</string>
-    <string name="download_pages">Download all pages (about 180 MB)</string>
+    <string name="download_pages">Download all pages (about 80 MB)</string>
     <string name="clear_pages">Remove saved pages</string>
     <string name="delete_recording_title">Delete this recording\'s downloads?</string>
     <string name="cancel">Cancel</string>

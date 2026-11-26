@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.animation.core.tween
 import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -183,6 +184,23 @@ private fun rememberAyahActions(names: Map<Int, String>, onRepeat: (RepeatReques
 
 private val SIDE = 104.dp
 
+/**
+ * The header's fade-through on a page turn (260 ms); with animations off, an
+ * instant cut (no transition at all, so the old value never shares a frame).
+ */
+@Composable
+private fun <T> HeaderSwap(value: T, reduceMotion: Boolean, label: String, content: @Composable (T) -> Unit) {
+    if (reduceMotion) {
+        content(value)
+    } else {
+        AnimatedContent(
+            value,
+            transitionSpec = { (fadeIn(tween(260)) + scaleIn(tween(260), initialScale = 0.92f)) togetherWith fadeOut(tween(260)) },
+            label = label,
+        ) { content(it) }
+    }
+}
+
 @Composable
 private fun Header(
     suwar: List<Surah>,
@@ -194,13 +212,14 @@ private fun Header(
     val page by container.mushaf.currentPage.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
     val juz = juzForPage(page)
+    val reduceMotion = rememberReduceMotion()
     val onPage = surahsOnPage(page, suwar)
     Row(
         Modifier.fillMaxWidth().background(LocalMushafPalette.current.background).padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(SIDE), contentAlignment = Alignment.CenterStart) {
-            AnimatedContent(juz, transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.92f)) togetherWith fadeOut() }, label = "juz") { j ->
+            HeaderSwap(juz, reduceMotion, "juz") { j ->
                 val n = localDigits(j, locale)
                 Roundel(numeral = n, semanticLabel = stringResource(R.string.juz_number, n), caption = stringResource(R.string.juz_short))
             }
@@ -208,7 +227,7 @@ private fun Header(
         Spacer(Modifier.width(6.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             val first = onPage.firstOrNull()
-            AnimatedContent(first, transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.92f)) togetherWith fadeOut() }, label = "surah") { s ->
+            HeaderSwap(first, reduceMotion, "surah") { s ->
                 if (s == null) {
                     Box(Modifier.height(48.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         if (onRetry != null) {

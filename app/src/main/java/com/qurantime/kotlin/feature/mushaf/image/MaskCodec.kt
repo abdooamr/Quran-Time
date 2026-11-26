@@ -53,6 +53,10 @@ private fun readFile(input: InputStream): Triple<Int, Int, ByteArray> = try {
     // Pages are made at most a few thousand pixels wide; anything larger is a
     // damaged header (and would overflow or exhaust memory when allocated).
     if (w == 0 || h == 0 || n < 0 || w > MAX_MASK_WIDTH || h > MAX_MASK_HEIGHT) throw CorruptMaskException("bad header ${w}x$h/$n")
+    // Deflate never grows data by more than a few bytes per 16 KB block, so a
+    // payload longer than the raw pixels is a damaged length, checked before
+    // anything is allocated for it.
+    if (n > w.toLong() * h + w.toLong() * h / 1000 + 1024) throw CorruptMaskException("bad payload length $n for ${w}x$h")
     val payload = ByteArray(n).also { d.readFully(it) }
     Triple(w, h, payload)
 } catch (e: IOException) {

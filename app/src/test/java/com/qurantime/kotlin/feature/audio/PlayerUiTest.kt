@@ -1,5 +1,8 @@
 package com.qurantime.kotlin.feature.audio
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -117,5 +120,12 @@ class PlayerUiTest {
         c.play(kahf)
         rule.onNodeWithText("couldn't be played", substring = true).assertExists()
     }
-}
 
+    // Release review: every target is at least 48 dp (DESIGN.md, Layout).
+    @Test
+    fun `the mini player's play seal is a full 48dp target`() {
+        val c = rule.launchApp()
+        c.play(kahf)
+        rule.onNodeWithTag("mini-play").assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+    }
+}

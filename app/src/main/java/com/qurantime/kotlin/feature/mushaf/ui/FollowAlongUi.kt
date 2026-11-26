@@ -1,5 +1,7 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.EnterTransition
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -155,10 +157,11 @@ fun BoxScope.BackToRecitation() {
     val paused by c.mushaf.followPaused.collectAsStateWithLifecycle()
     val current by c.mushaf.currentPage.collectAsStateWithLifecycle()
     val page = f.currentPage
+    val reduceMotion = rememberReduceMotion()
     AnimatedVisibility(
         visible = f.active && paused && page != null && page != current,
-        enter = fadeIn(),
-        exit = fadeOut(),
+        enter = if (reduceMotion) EnterTransition.None else fadeIn(),
+        exit = if (reduceMotion) ExitTransition.None else fadeOut(),
         // In the folio band under the page frame: it may cover the page number for a moment, never the text.
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
     ) {

@@ -148,4 +148,29 @@ class MushafScreenTest {
         rule.awaitTag("mushaf-page-art-50")
         assertTrue(rule.onAllNodes(androidx.compose.ui.test.hasTestTag("mushaf-page-offline-50")).fetchSemanticsNodes().isEmpty())
     }
+
+    // Release review: "With reduce-motion on, every one of these is an instant
+    // cut" (DESIGN.md, Motion) - the header's juz and surah fades included.
+    @Test
+    fun `with animations off the header cuts to the new juz`() {
+        val resolver = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>().contentResolver
+        android.provider.Settings.Global.putFloat(resolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
+        try {
+            val c = rule.launchApp(lastPage = 21) // the last page of juz 1
+            rule.awaitTag("mushaf-page-21")
+            rule.mainClock.autoAdvance = false
+            rule.runOnUiThread { c.mushaf.goTo(22) } // juz 2 starts on page 22
+            var frames = 0
+            while (rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Juz 2")).fetchSemanticsNodes().isEmpty() && frames < 200) {
+                rule.mainClock.advanceTimeByFrame()
+                org.robolectric.shadows.ShadowLooper.idleMainLooper()
+                frames++
+            }
+            // The frame the new juz appears, the old one is already gone.
+            assertTrue(rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Juz 1")).fetchSemanticsNodes().isEmpty())
+        } finally {
+            rule.mainClock.autoAdvance = true
+            android.provider.Settings.Global.putFloat(resolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+        }
+    }
 }

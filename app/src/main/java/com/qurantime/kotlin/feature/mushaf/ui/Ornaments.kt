@@ -1,5 +1,6 @@
 package com.qurantime.kotlin.feature.mushaf.ui
 
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Pause
@@ -166,27 +167,32 @@ fun Modifier.giltRing(gilt: Color): Modifier = drawBehind {
 @Composable
 fun PlaySeal(playing: Boolean, onClick: () -> Unit, label: String, size: Dp, modifier: Modifier = Modifier) {
     val p = LocalMushafPalette.current
+    // Drawn at [size], but it takes touches across at least 48 dp (older readers).
     Box(
         modifier
-            .size(size)
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .clip(CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = label }
-            .drawBehind {
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(size).drawBehind {
                 val c = center
                 val r = this.size.minDimension / 2
                 drawCircle(p.field, r, c)
                 drawCircle(p.gilt, r - 1.dp.toPx(), c, style = Stroke(1.4.dp.toPx()))
                 drawCircle(p.gilt, r - 4.dp.toPx(), c, style = Stroke(0.8.dp.toPx()))
             },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            contentDescription = null,
-            tint = p.onField,
-            modifier = Modifier.size(size * 0.48f),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                contentDescription = null,
+                tint = p.onField,
+                modifier = Modifier.size(size * 0.48f),
+            )
+        }
     }
 }
 

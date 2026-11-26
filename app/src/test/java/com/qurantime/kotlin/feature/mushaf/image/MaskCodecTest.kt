@@ -99,4 +99,22 @@ class MaskCodecTest {
             RawDeflateMaskCodec.decodeMask(bytes.inputStream())
         }
     }
+
+    // Release review: the payload length was not bounded, so a damaged length
+    // allocated up to 2 GB (OutOfMemoryError, not caught) before failing.
+    @Test
+    fun `an absurd payload length is rejected before allocating`() {
+        val bytes = java.io.ByteArrayOutputStream().also { o ->
+            java.io.DataOutputStream(o).apply {
+                write("QTM1".toByteArray())
+                writeShort(100)
+                writeShort(100)
+                writeInt(Int.MAX_VALUE)
+                write(ByteArray(10))
+            }
+        }.toByteArray()
+        org.junit.Assert.assertThrows(CorruptMaskException::class.java) {
+            RawDeflateMaskCodec.decodeMask(bytes.inputStream())
+        }
+    }
 }

@@ -59,7 +59,9 @@ class Media3Backend(private val player: Player, private val scope: CoroutineScop
         player.addListener(object : Player.Listener {
             override fun onEvents(p: Player, events: Player.Events) {
                 _index.value = if (p.mediaItemCount == 0) null else p.currentMediaItemIndex
-                _state.value = BackendState(p.playWhenReady, p.playbackState.toProcessing())
+                // Idle (stopped, or after an error) is never "playing", whatever
+                // playWhenReady says: the player needs preparing before it can play.
+                _state.value = BackendState(p.playWhenReady && p.playbackState != Player.STATE_IDLE, p.playbackState.toProcessing())
                 _duration.value = p.duration.takeIf { it != C.TIME_UNSET && !p.isCurrentMediaItemLive }
                 if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) updateTicker(p.isPlaying)
                 if (events.contains(Player.EVENT_POSITION_DISCONTINUITY)) _positions.tryEmit(p.currentPosition)
@@ -122,7 +124,11 @@ class Media3Backend(private val player: Player, private val scope: CoroutineScop
     }
 
     override fun pause() = player.pause()
-    override fun stop() = player.stop()
+    override fun stop() {
+        // stop() alone keeps playWhenReady, so a later seek would start playing by itself.
+        player.pause()
+        player.stop()
+    }
 
     override fun seek(positionMs: Long, index: Int?) {
         if (index == null) player.seekTo(positionMs) else player.seekTo(index, positionMs)

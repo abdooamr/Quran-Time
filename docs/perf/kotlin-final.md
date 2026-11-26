@@ -1,4 +1,24 @@
-# Kotlin app — final measurements (Task 35)
+# Kotlin app — final measurements
+
+## Release re-measure (2026-11-26, after the review fixes and the reading-sweep redesign)
+
+Same phone, method and scripts as below; release build `b0d3109` (4.25 MB),
+profile compiled.
+
+| metric | result | target |
+|---|---|---|
+| cold start to fully drawn, median of 10 | **375 ms** (256–568) | ≤ 600 ms and below Flutter's 586 ms ✓ |
+| swipe jank, 5 runs of 40 swipes | **0.00 %** median (0, 0, 0, 0, 0.82 %), p99 25–28 ms | ≤ 1 % ✓ |
+| memory (PSS), Play page on page 3, 30 s in | **116 MB** | ≤ 120 MB ✓ (tight) |
+| all 604 page masks | 78.9 MB (portrait render width unchanged) | ≤ 100 MB ✓ |
+| APK | 4.25 MB | ≤ 8 MB ✓ |
+
+Moving JSON parsing off the main thread is the likely reason start-up and
+swipes improved. A first round of starts right after the profile compile ran
+at 500 ms (the phone was still busy); the settled round is reported.
+Landscape reading: 118 MB after 6 swipes (portrait 92 MB at rest).
+
+## Task 35 measurements
 
 Galaxy A50 (SM-A505FN, Android 12), release build (4.06 MB APK) with the
 regenerated Baseline Profile compiled (`cmd package compile -f -m

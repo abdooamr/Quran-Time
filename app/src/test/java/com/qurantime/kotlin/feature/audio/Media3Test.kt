@@ -102,6 +102,23 @@ class Media3BackendTest {
         p.release()
     }
 
+    // Found on the A50: after stop() (opening a TV channel) the mini player
+    // showed Pause over a silent, idle player, so the first tap paused it.
+    // stop() keeps ExoPlayer's playWhenReady; an idle player is not playing.
+    @Test
+    fun `after stop the player is reported as not playing`() {
+        val (p, backend) = preparedPlayer()
+        backend.play()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_READY)
+        ShadowLooper.idleMainLooper()
+        assertTrue(backend.state.value.playing)
+        backend.stop()
+        TestPlayerRunHelper.run(p).untilState(Player.STATE_IDLE)
+        ShadowLooper.idleMainLooper()
+        assertFalse(backend.state.value.playing)
+        p.release()
+    }
+
     @Test
     fun `seeking to the next item after an error prepares again`() {
         val (p, backend) = preparedPlayer()

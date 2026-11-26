@@ -24,6 +24,8 @@ import com.qurantime.kotlin.feature.audio.QueueHandler
 import com.qurantime.kotlin.feature.audio.buildPlayer
 import com.qurantime.kotlin.feature.bookmarks.BookmarksRepository
 import com.qurantime.kotlin.feature.downloads.Downloader
+import com.qurantime.kotlin.feature.video.DefaultVideoPlayerFactory
+import com.qurantime.kotlin.feature.video.VideoPlayerFactory
 import com.qurantime.kotlin.feature.downloads.PagePack
 import com.qurantime.kotlin.feature.downloads.WorkManagerPagePack
 import com.qurantime.kotlin.feature.downloads.DownloadsRepository
@@ -103,6 +105,7 @@ open class AppContainer(context: Context) {
     open val queue: QueueHandler by lazy { QueueHandler(Media3Backend(player, mainScope), localPathFor = downloads::localPathFor, mainScope) }
 
     open val downloader: Downloader by lazy { WorkManagerDownloader(appContext) }
+    open val videoPlayers: VideoPlayerFactory = DefaultVideoPlayerFactory
     val downloads by lazy { DownloadsRepository(db.downloadsDao(), downloader, appContext.filesDir, appScope) }
     open val pagePack: PagePack by lazy { WorkManagerPagePack(appContext) }
 

@@ -114,6 +114,8 @@ dependencies {
     implementation(libs.androidsvg)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    implementation(libs.media3.exoplayer.hls)
+    implementation(libs.media3.ui)
     implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)

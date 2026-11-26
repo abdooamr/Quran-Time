@@ -37,6 +37,9 @@ import com.qurantime.kotlin.core.nav.TitledPlaceholder
 import com.qurantime.kotlin.core.nav.tab
 import com.qurantime.kotlin.core.settings.SettingsDrivenApp
 import com.qurantime.kotlin.core.nav.PlayerRoute
+import com.qurantime.kotlin.core.nav.VideoRoute
+import com.qurantime.kotlin.feature.live.ui.LiveScreen
+import com.qurantime.kotlin.feature.video.VideoPlayerScreen
 import com.qurantime.kotlin.core.ui.OfflineBanner
 import com.qurantime.kotlin.feature.audio.ui.FullPlayer
 import com.qurantime.kotlin.feature.audio.ui.MiniPlayer
@@ -80,6 +83,10 @@ fun QuranTimeRoot(container: AppContainer) {
                     MiniPlayer(onOpen = { nav.navigate(PlayerRoute) { launchSingleTop = true } })
                 },
             ) {
+                composable<VideoRoute> {
+                    val v = it.toRoute<VideoRoute>()
+                    VideoPlayerScreen(v.url, v.title, v.live, onClose = { nav.popBackStack() })
+                }
                 composable<PlayerRoute> { FullPlayer(onClose = { nav.popBackStack() }, extras = { RepeatAyahsButton() }) }
                 tab<MushafTab, MushafRoute>(MushafRoute, {
                     MushafScreen(headerActions = { page, suwar ->
@@ -102,7 +109,7 @@ fun QuranTimeRoot(container: AppContainer) {
                         )
                     }
                 }
-                tab<LiveTab, LiveRoute>(LiveRoute, { TabPlaceholder(AppTab.LIVE) })
+                tab<LiveTab, LiveRoute>(LiveRoute, { LiveScreen() })
                 tab<ExploreTab, ExploreRoute>(ExploreRoute, { TabPlaceholder(AppTab.EXPLORE) }) {
                     composable<TafsirSurahRoute> { TitledPlaceholder(stringResource(R.string.tab_explore)) }
                 }

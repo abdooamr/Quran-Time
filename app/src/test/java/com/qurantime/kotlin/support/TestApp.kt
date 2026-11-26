@@ -75,6 +75,7 @@ class TestContainer(
     override val maskCodec: MaskCodec = LegacyFriendlyCodec
     override val pages = PageImageStore(root, pageFetcher, maskCodec, rasterize = solidRasterize)
     override val pagePack by lazy { com.qurantime.kotlin.feature.downloads.InProcessPagePack(pages, geometry, mainScope) }
+    override val videoPlayers: com.qurantime.kotlin.feature.video.VideoPlayerFactory = FakeVideoPlayerFactory()
     val fakeDownloader = FakeDownloader()
     override val downloader get() = fakeDownloader
     val backend = FakePlayerBackend()

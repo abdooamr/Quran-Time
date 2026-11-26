@@ -18,3 +18,9 @@ Collected during the unattended build (spec K6). Each line says what to do and w
 
 - [ ] Download a surah, then turn on airplane mode. Expected: it plays from the phone.
 - [ ] More → Downloads → "Download all pages", then airplane mode. Expected: every page opens, and tapping an ayah still shows its actions (outlines were saved too).
+
+## Live (Task 31)
+
+- [ ] Play a radio station, lock the phone. Expected: it keeps playing, with controls in the notification.
+- [ ] Open "Quran channel" and "Sunna channel". Expected: each plays; any recitation stops first; turning the phone sideways fills the screen and hides the system bars; Back returns to the list.
+- [ ] Start a channel, press Home, come back. Expected: the video paused while hidden and goes on when back.

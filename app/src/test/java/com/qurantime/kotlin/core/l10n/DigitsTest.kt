@@ -25,4 +25,10 @@ class DigitsTest {
         assertNull(parseLocalDigits("12a"))
         assertNull(parseLocalDigits(""))
     }
+
+    @Test
+    fun `sizes use the locale's digits and decimal mark`() {
+        assertEquals("3.0", com.qurantime.kotlin.feature.downloads.ui.formatMb(3L * 1024 * 1024, java.util.Locale.ENGLISH))
+        assertEquals("٣٫٥", com.qurantime.kotlin.feature.downloads.ui.formatMb(3L * 1024 * 1024 + 512 * 1024, java.util.Locale.forLanguageTag("ar")))
+    }
 }

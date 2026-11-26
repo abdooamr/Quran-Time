@@ -60,8 +60,14 @@ import com.qurantime.kotlin.feature.audio.SurahTrack
 import java.util.Locale
 import kotlinx.coroutines.launch
 
-/** `3.0` for 3 MB. */
-fun formatMb(bytes: Long): String = String.format(Locale.ROOT, "%.1f", bytes / (1024.0 * 1024.0))
+/** `3.0` for 3 MB; in Arabic with Eastern Arabic digits and the Arabic decimal mark (`٣٫٠`). */
+fun formatMb(bytes: Long, locale: Locale = Locale.ROOT): String {
+    val s = String.format(Locale.ROOT, "%.1f", bytes / (1024.0 * 1024.0))
+    if (locale.language != "ar") return s
+    return buildString(s.length) {
+        for (c in s) append(if (c in '0'..'9') '٠' + (c - '0') else if (c == '.') '٫' else c)
+    }
+}
 
 /** A surah row's download control: its state, and what tapping does in that state. */
 @Composable
@@ -156,7 +162,7 @@ fun DownloadsScreen() {
                             listOfNotNull(
                                 name?.second,
                                 stringResource(R.string.surahs_saved, localDigits(list.size, locale)),
-                                stringResource(R.string.size_mb, formatMb(bytes)),
+                                stringResource(R.string.size_mb, formatMb(bytes, locale)),
                             ).joinToString(" · "),
                         )
                     },
@@ -200,7 +206,7 @@ private fun PagePackCard() {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.mushaf_pages), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
-            Text(stringResource(R.string.pages_cached, stringResource(R.string.size_mb, formatMb(bytes))))
+            Text(stringResource(R.string.pages_cached, stringResource(R.string.size_mb, formatMb(bytes, locale))))
             Spacer(Modifier.height(12.dp))
             val p = progress
             if (p != null) {

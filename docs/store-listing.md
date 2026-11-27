@@ -5,7 +5,7 @@
 **App name:** Quran Time
 
 **Short description (≤ 80 characters):**
-Read the Madinah Mushaf and listen along, with the ayah highlighted as it's recited.
+Read the Madinah Mushaf and listen along as each recited ayah is highlighted.
 
 **Full description:**
 
